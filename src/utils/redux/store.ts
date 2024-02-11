@@ -6,11 +6,13 @@ import { combineReducers } from "redux";
 import logger from 'redux-logger';
 import {FLUSH, PAUSE, PERSIST, Persistor, REGISTER, REHYDRATE, persistReducer, persistStore} from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+import { authService } from '../../api-query/auth-api';
 
 
 // creates reducers
 const rootReducers = combineReducers({
     // define api here
+    [authService.reducerPath] : authService.reducer
 })
 // create persistor key
 const peristorConfig = {
@@ -37,6 +39,7 @@ const store = configureStore({
         }
     }).concat(
         // define midleware
+        authService.middleware,
         logger
     ),
     devTools:process.env.NODE_ENV != 'production'
