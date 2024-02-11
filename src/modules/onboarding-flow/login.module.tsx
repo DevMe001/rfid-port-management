@@ -2,9 +2,31 @@
 
 import Immutable from '../../immutable/constant';
 import PortPng from '../../assets/login/port.png';
+import { useEffect } from 'react';
+import {useLocation, useSearchParams } from 'react-router-dom';
+import CryptoJS from 'crypto-js';;
+import qs from 'qs';
 
 function Login() {
  
+	const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const encryptedQueryString = searchParams.get('qs');
+
+	console.log(encryptedQueryString);
+
+
+    // Check if encryptedQueryString is not null before decrypting
+    if (encryptedQueryString) {
+		const decData = CryptoJS.enc.Base64.parse(encryptedQueryString).toString(CryptoJS.enc.Utf8);
+		const bytes = CryptoJS.AES.decrypt(decData, 'authenticate').toString(CryptoJS.enc.Utf8);
+
+
+		console.log(JSON.parse(bytes));
+     
+    }
+
+
 
 const signInFacebook = async()=>{
 		window.location.href = 	`${Immutable.API}/auth/facebook`;
