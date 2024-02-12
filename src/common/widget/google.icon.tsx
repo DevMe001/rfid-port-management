@@ -50,7 +50,7 @@ const GoogleSignIn = (props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElem
     <div className="bg-indigo-500 w-[15rem] h-[3rem] ">
       <div className="flex justify-center items-center h-full text-white font-semibold text-sm md:text-2xl">
       <span>
-    Sign in with google
+    Sign in with Google
     </span>
       </div>
     </div>

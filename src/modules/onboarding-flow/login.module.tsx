@@ -60,7 +60,7 @@ function Login() {
 
   return (
 		<>
-		<div className='grid grid-cols-2  w-full h-screen place-items-center'>
+		<div className='grid grid-cols-1 md:grid-cols-2  w-full h-screen place-items-center'>
 		<div className='bg-indigo-600 h-full text-white w-[50vw]'>
 			<div className='flex flex-col justify-center items-center h-full'>
 				<img src={PortPng} alt="port-png"/>
