@@ -36,6 +36,9 @@ function Login() {
 	
 			if (data.accessToken) {
 
+				enqueueSnackbar('Login success', { variant: 'success', autoHideDuration: 5000 });
+				await waitSec(3000);
+
 			dispatch(addUser({
 				id:data.profile.id,
 				displayName:data.profile.displayName,
@@ -44,9 +47,6 @@ function Login() {
 				accessToken:data.accessToken
 			}))
 
-
-			  enqueueSnackbar('Login success', { variant: 'success', autoHideDuration: 5000 });
-			 await waitSec(3000);
 			  navigate('/dashboard');
 			} else {
 			  enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });

@@ -8,6 +8,7 @@ import PublicRoute from './public';
 
 
 const LoginwithSnackbar = withSnackbar(Login);
+const DashboardwithSnackbar = withSnackbar(Dasboard);
 
 
 const Router = createBrowserRouter([
@@ -20,7 +21,7 @@ const Router = createBrowserRouter([
             },
             {
                 path:'/dashboard',
-                element:<PrivateRoute><Dasboard/></PrivateRoute>
+                element:<PrivateRoute><DashboardwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} /></PrivateRoute>
             }
         ]
     }
