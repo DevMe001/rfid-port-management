@@ -1,7 +1,12 @@
+import DashboardMain from "../../common/components/ui/main.ui.component"
+import Navigation from "../../common/components/ui/navigation.ui.component"
 
 const Dasboard = () => {
   return (
-    <div>Dasboard</div>
+    <div className="container">
+        <Navigation/>
+      <DashboardMain/>
+    </div>
   )
 }
 
