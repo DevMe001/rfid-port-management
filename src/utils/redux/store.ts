@@ -7,12 +7,14 @@ import logger from 'redux-logger';
 import {FLUSH, PAUSE, PERSIST, Persistor, REGISTER, REHYDRATE, persistReducer, persistStore} from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { authService } from '../../api-query/auth-api';
+import authReducers from './slicer/authSlice';
 
 
 // creates reducers
 const rootReducers = combineReducers({
     // define api here
-    [authService.reducerPath] : authService.reducer
+    [authService.reducerPath] : authService.reducer,
+    authUser: authReducers,
 })
 // create persistor key
 const peristorConfig = {

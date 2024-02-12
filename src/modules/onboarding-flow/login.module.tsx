@@ -7,11 +7,15 @@ import {useLocation, useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';;
 import { enqueueSnackbar } from 'notistack';
 import waitSec from '../../utils/setTimeout';
+import { useAppDispatch } from '../../utils/redux/store';
+import { addUser } from '../../utils/redux/slicer/authSlice';
 
 function Login() {
  
 	const location = useLocation();
 	const navigate = useNavigate();
+
+	const dispatch = useAppDispatch();
 	
 
 
@@ -24,9 +28,21 @@ function Login() {
 		  if (encryptedQueryString) {
 			const decData = CryptoJS.enc.Base64.parse(encryptedQueryString).toString(CryptoJS.enc.Utf8);
 			const bytes = CryptoJS.AES.decrypt(decData, 'authenticate').toString(CryptoJS.enc.Utf8);
-			const token = JSON.parse(bytes);
+			const data = JSON.parse(bytes);
+
+			console.log(data,'get data');
 	
-			if (token) {
+			if (data.accessToken) {
+
+			dispatch(addUser({
+				id:data.profile.id,
+				displayName:data.profile.displayName,
+				email:data.profile.email,
+				picture:data.profile.photos[0].value,
+				accessToken:data.accessToken
+			}))
+
+
 			  enqueueSnackbar('Login success', { variant: 'success', autoHideDuration: 5000 });
 			 await waitSec(3000);
 			  navigate('/dashboard');
