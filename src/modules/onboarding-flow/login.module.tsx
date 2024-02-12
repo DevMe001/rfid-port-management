@@ -3,29 +3,41 @@
 import Immutable from '../../immutable/constant';
 import PortPng from '../../assets/login/port.png';
 import { useEffect } from 'react';
-import {useLocation, useSearchParams } from 'react-router-dom';
+import {useLocation, useNavigate } from 'react-router-dom';
 import CryptoJS from 'crypto-js';;
-import qs from 'qs';
+import { enqueueSnackbar } from 'notistack';
+import waitSec from '../../utils/setTimeout';
 
 function Login() {
  
 	const location = useLocation();
-    const searchParams = new URLSearchParams(location.search);
-    const encryptedQueryString = searchParams.get('qs');
-
-	console.log(encryptedQueryString);
+	const navigate = useNavigate();
+	
 
 
-    // Check if encryptedQueryString is not null before decrypting
-    if (encryptedQueryString) {
-		const decData = CryptoJS.enc.Base64.parse(encryptedQueryString).toString(CryptoJS.enc.Utf8);
-		const bytes = CryptoJS.AES.decrypt(decData, 'authenticate').toString(CryptoJS.enc.Utf8);
-
-
-		console.log(JSON.parse(bytes));
-     
-    }
-
+	useEffect(() => {
+		async function getUserProfile() {
+		  const searchParams = new URLSearchParams(location.search);
+		  const encryptedQueryString = searchParams.get('qs');
+	
+		  // Check if encryptedQueryString is not null before decrypting
+		  if (encryptedQueryString) {
+			const decData = CryptoJS.enc.Base64.parse(encryptedQueryString).toString(CryptoJS.enc.Utf8);
+			const bytes = CryptoJS.AES.decrypt(decData, 'authenticate').toString(CryptoJS.enc.Utf8);
+			const token = JSON.parse(bytes);
+	
+			if (token) {
+			  enqueueSnackbar('Login success', { variant: 'success', autoHideDuration: 5000 });
+			 await waitSec(3000);
+			  navigate('/dashboard');
+			} else {
+			  enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
+			}
+		  }
+		}
+	
+		getUserProfile();
+	  }, [location.search, enqueueSnackbar, navigate]);
 
 
 const signInFacebook = async()=>{
