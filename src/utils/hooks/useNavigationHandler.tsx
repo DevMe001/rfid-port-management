@@ -1,4 +1,3 @@
-import React, { useCallback } from 'react'
 import { useAppDispatch } from '../redux/store'
 import { revertUser } from '../redux/slicer/authSlice';
 import { useNavigate } from 'react-router-dom';
@@ -27,10 +26,10 @@ const useNavigationHandler = () => {
 
     }
 
-    const onSigoutOut = () =>{
+    const onSigoutOut = async() =>{
 
         enqueueSnackbar('Logout successfully', { variant: 'success', autoHideDuration: 5000 });
-        waitSec(3000);
+        await waitSec(3000);
         dispatch(revertUser());
         navigate('/');
     }
