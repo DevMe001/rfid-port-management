@@ -26,10 +26,13 @@ const authSlice = createSlice({
         addUser : (_state,action:PayloadAction<IUser>) =>{
             return action.payload;
         },
+        revertUser : () =>{
+            return initialState;
+        },
     }
 });
 
-export const { addUser } = authSlice.actions;
+export const { addUser,revertUser } = authSlice.actions;
 
 
 export default authSlice.reducer;

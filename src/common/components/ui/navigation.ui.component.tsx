@@ -1,5 +1,7 @@
 import {isEmpty} from 'lodash';
 import './styles/navigation.style.css';
+import useNavigationHandler from '../../../utils/hooks/useNavigationHandler';
+
 
 const liTag = [
    {
@@ -26,12 +28,18 @@ const liTag = [
 
 
 const Navigation = ()=>{
+
+    const [onHandlerNavigationEvent] = useNavigationHandler();
+
+  
+
+
     return (
-       <div data-title='navigation' className="navigation">
+       <div data-title='navigation' className="navigation" >
         <ul  data-title='nav-list'>
             {
-                !isEmpty(liTag) && liTag.map((list) =>(
-                    <li>
+                !isEmpty(liTag) && liTag.map((list,i) =>(
+                    <li key={i} onClick={()=> onHandlerNavigationEvent(list.label)}>
                         <a  href="#">
                         <span className='icon px-2 py-2' dangerouslySetInnerHTML={{__html: list.icon}}>
                         
