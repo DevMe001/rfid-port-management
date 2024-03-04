@@ -32,12 +32,12 @@ const HomePage = () => {
 						{/* desktop view navigation */}
 						<nav className='hidden md:block'>
 							<ul className='flex justify-between items-baseline gap-4 px-10 text-lite font-medium text-xl cursor-pointer'>
-								<li className='hover:text-navy'>HOME</li>
-								<li className='hover:text-navy'>BOOK</li>
-								<li className='hover:text-navy'>SCHEDULE</li>
-								<li className='hover:text-navy'>ABOUT US</li>
-								<li className='hover:text-navy'>CONTACT US</li>
-								<li className='hover:text-navy'>LOGIN</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>HOME</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>BOOK</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>SCHEDULE</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>ABOUT US</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>CONTACT US</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>LOGIN</li>
 							</ul>
 						</nav>
 
@@ -124,7 +124,7 @@ const HomePage = () => {
 									</svg>
 								</i>
 								<i data-title='youtube'>
-									<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' fill='none' viewBox='0 0 36 36'>
+									<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36' stroke='currentColor' fill='none' viewBox='0 0 36 36'>
 										<path fill='#fff' d='M32.701 12s-.293-2.068-1.195-2.977c-1.143-1.195-2.42-1.2-3.006-1.271-4.195-.305-10.494-.305-10.494-.305h-.012s-6.299 0-10.494.305c-.586.07-1.863.076-3.006 1.271C3.592 9.932 3.304 12 3.304 12S3 14.432 3 16.857v2.274c0 2.426.299 4.857.299 4.857s.293 2.069 1.19 2.977c1.142 1.195 2.642 1.154 3.31 1.283 2.402.229 10.201.299 10.201.299s6.305-.012 10.5-.31c.586-.071 1.863-.077 3.006-1.272.902-.908 1.195-2.977 1.195-2.977S33 21.563 33 19.131v-2.274c0-2.425-.299-4.857-.299-4.857zm-17.8 9.89V13.46l8.103 4.23-8.104 4.202z'></path>
 									</svg>
 								</i>
