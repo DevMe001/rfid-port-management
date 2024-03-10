@@ -2,13 +2,13 @@
 import PortPng from '../../assets/login/port.png';
 import { useEffect } from 'react';
 import {useLocation, useNavigate } from 'react-router-dom';
-import CryptoJS from 'crypto-js';;
+import CryptoJS from 'crypto-js';
 import { enqueueSnackbar } from 'notistack';
 import waitSec from '../../utils/setTimeout';
 import { useAppDispatch } from '../../utils/redux/store';
 import { addUser } from '../../utils/redux/slicer/authSlice';
-import GoogleSignIn from '../../common/widget/google.icon';
-import FacebookIcon from '../../common/widget/fb.icon';
+import GoogleSignIn from '../../common/components/icons/google.icon';
+import FacebookIcon from '../../common/components/icons/fb.icon';
 
 function Login() {
  

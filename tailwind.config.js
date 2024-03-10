@@ -19,6 +19,21 @@ export default {
 				dark: '#150710',
 				lite: '#F1F0E8',
 			},
+			animation: {
+				fade: 'fadeIn 1s ease-in-out',
+				fadeOut: 'fadeOut 5s ease-in',
+			},
+			keyframes: {
+				fadeIn: {
+					'0%': { opacity: 0 },
+					'100%': { opacity: 1 },
+				},
+				fadeOut: {
+					'0%': { opacity: 1 },
+					'50%': { opacity: 0.5 },
+					'100%': { opacity: 0 },
+				},
+			},
 		},
 	},
 	plugins: [],

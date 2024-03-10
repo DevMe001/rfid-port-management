@@ -1,15 +1,66 @@
 import Ship from '../../assets/home/ship01.jpg';
 import Footer from '../../assets/home/footer.png';
 import Logo from '../../assets/home/logo.png';
-import { onToggleNav } from '../../utils/hooks/globa.state';
-import { useCallback } from 'react';
+import { onToggleNavHomepageMobile } from '../../utils/hooks/globa.state';
+import { useCallback, useEffect } from 'react';
 import RenderIf from '../../common/components/ui/render-if';
 import CatalogDisplay from '../../common/widget/slider';
+import Modal from '../../common/widget/modal';
+import GoogleSignIn from '../../common/components/icons/google.icon';
+import FacebookIcon from '../../common/components/icons/fb.icon';
+import CryptoJS from 'crypto-js';
+import { enqueueSnackbar } from 'notistack';
+import { addUser } from '../../utils/redux/slicer/authSlice';
+import waitSec from '../../utils/setTimeout';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAppDispatch } from '../../utils/redux/store';
 
 const HomePage = () => {
 
-	const [toggle, setToggle] = onToggleNav();
+	const [toggle, setToggle] = onToggleNavHomepageMobile();
 
+		const location = useLocation();
+		const navigate = useNavigate();
+
+		const dispatch = useAppDispatch();
+	
+
+	
+	useEffect(() => {
+		async function getUserProfile() {
+		  const searchParams = new URLSearchParams(location.search);
+		  const encryptedQueryString = searchParams.get('qs');
+	
+		  // Check if encryptedQueryString is not null before decrypting
+		  if (encryptedQueryString) {
+			const decData = CryptoJS.enc.Base64.parse(encryptedQueryString).toString(CryptoJS.enc.Utf8);
+			const bytes = CryptoJS.AES.decrypt(decData, 'authenticate').toString(CryptoJS.enc.Utf8);
+			const data = JSON.parse(bytes);
+
+			console.log(data,'get data');
+	
+			if (data.accessToken) {
+
+				enqueueSnackbar('Login success', { variant: 'success', autoHideDuration: 5000 });
+				await waitSec(3000);
+
+			dispatch(addUser({
+				id:data.profile.id,
+				displayName:data.profile.displayName,
+				email:data.profile.email,
+				picture:data.profile.photos[0].value,
+				accessToken:data.accessToken
+			}))
+
+			  navigate('/dashboard');
+			} else {
+			  enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
+			}
+		  }
+		}
+	
+		getUserProfile();
+	  }, [location.search, enqueueSnackbar, navigate]);
 
 
 
@@ -37,7 +88,17 @@ const HomePage = () => {
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>SCHEDULE</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>ABOUT US</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>CONTACT US</li>
-								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>LOGIN</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
+									<Modal label='login'>
+										<div className='flex flex-col justify-center items-center gap-1'>
+											<img src={Logo} alt='' className='w-[3rem] h-[3rem] sm:w-[8rem] sm:h-[6rem] object-fit' />
+											<p className='text-center font-bold uppercase text-navy'>Port system</p>
+
+											<GoogleSignIn />
+											<FacebookIcon />
+										</div>
+									</Modal>
+								</li>
 							</ul>
 						</nav>
 
@@ -81,7 +142,9 @@ const HomePage = () => {
 							<li>SCHEDULE</li>
 							<li>ABOUT US</li>
 							<li>CONTACT US</li>
-							<li>LOGIN</li>
+							<li>
+								<Modal label='LOGIN' />
+							</li>
 						</ul>
 					</nav>
 				</div>

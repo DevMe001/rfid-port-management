@@ -1,7 +1,12 @@
 import * as React from "react"
 import { JSX } from "react/jsx-runtime"
-import Immutable from "../../immutable/constant"
-const GoogleSignIn = (props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => (
+import Immutable from "../../../immutable/constant"
+
+
+
+
+
+const GoogleSignIn:React.FC<JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>> = (props) => (
   <div className="flex justify-between items-center bg-indigo-500  px-2 py-1 gap-2 my-5" onClick={() => window.location.href = 	`${Immutable.API}/auth/google`}>
     <div className="bg-white">
     <svg
@@ -10,7 +15,7 @@ const GoogleSignIn = (props: JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElem
     id="Capa_1"
     style={{
         vectorEffect: 'non-scaling-stroke',
-        width:50,
+        width:65,
         height:50
     }}
     viewBox="0 0 150 150"

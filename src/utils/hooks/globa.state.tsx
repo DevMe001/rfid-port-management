@@ -1,4 +1,5 @@
 import {createGlobalState} from 'react-use';
 
 
-export const onToggleNav = createGlobalState<boolean>(false);
+export const onToggleNavHomepageMobile = createGlobalState<boolean>(false);
+export const onToggleModal= createGlobalState<boolean>(false);
