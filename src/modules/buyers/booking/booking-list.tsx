@@ -66,7 +66,6 @@ const BookingRecentList = () => {
      if(isEmpty(user.accessToken)) onOpen;
      else setBookingModal(!bookingModal);
 
-		  document.body.style.overflow = 'auto';
 		};
 
 
