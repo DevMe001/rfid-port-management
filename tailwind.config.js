@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-	content: ['./src/**/*.{html,js,tsx,ts}'],
+	content: ['./src/**/*.{html,js,tsx,ts}', 'node_modules/flowbite-react/**/*.{js,jsx,ts,tsx}'],
 	theme: {
 		screens: {
 			xxs: '20rem', //320
@@ -22,6 +22,7 @@ export default {
 			animation: {
 				fade: 'fadeIn 1s ease-in-out',
 				fadeOut: 'fadeOut 5s ease-in',
+				slideDown: 'slideDown 0.1s ease-in',
 			},
 			keyframes: {
 				fadeIn: {
@@ -33,9 +34,14 @@ export default {
 					'50%': { opacity: 0.5 },
 					'100%': { opacity: 0 },
 				},
+				slideDown: {
+					'0%': { height: 0 },
+					'50%': { height: '5rem' },
+					'100%': { height: '8rem' },
+				},
 			},
 		},
 	},
-	plugins: [],
+	plugins: [require('flowbite/plugin')],
 };
 

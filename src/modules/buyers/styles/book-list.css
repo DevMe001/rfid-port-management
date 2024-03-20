@@ -1,0 +1,110 @@
+:root {
+    --primary: #032868;
+    --secondary: #1342A4;
+    --customDarkBlue: #1342A4;
+    --accent: #D15331;
+    --navy: #091B40;
+    --dark: #150710;
+    --lite: #F1F0E8;
+    --default: #ffffff;
+}
+
+
+
+.indicator:before{
+  position: 'absolute';
+  content:" ";
+  top:0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin-left: -1.5rem;
+  width:1rem;
+  height: 2rem;
+  border-radius: 100%;
+  background-color: var(--accent);
+ 
+
+  
+}
+
+.indicator{
+  position: 'relative';
+  left:20px;
+  top:0;
+  right: 0;
+  bottom: 0;
+  height: auto;
+
+  border-left: 3px solid var(--accent)
+}
+
+.indicator:after{
+  position: 'absolute';
+  content:" ";
+  left:0;
+  top:0;
+  bottom: 0;
+  margin-left: -1.5rem;
+  margin-top: 2.5rem;
+  width:1rem;
+  height: 2rem;
+  border-radius: 100%;
+  background-color: var(--accent);
+  
+}
+
+
+.route::before{
+  position: 'absolute';
+  content:" ";
+  left:0;
+  right:0;
+  top: 0;
+  bottom:0;
+  margin-left: -20px;
+  width:0.5rem;
+  height: 0.5rem;
+  border-radius: 100%;
+  background: var(--accent);
+}
+
+.route{
+  border-bottom: 1px solid var(--accent);
+}
+
+.route::after{
+  position: 'absolute';
+  content:" ";
+  width:0.5rem;
+  height: 0.5rem;
+  border-radius: 100%;
+  background: var(--accent);
+}
+
+.borderLite{
+  border:1px solid #7e7e7e;
+}
+
+.borderGray{
+  border:1px solid #eaeaea;
+}
+
+
+.passenger-box{
+  cursor: text;
+}
+
+
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  margin: 0;
+}
+
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+

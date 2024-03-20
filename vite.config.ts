@@ -4,27 +4,51 @@ import svgr from 'vite-plugin-svgr';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+	optimizeDeps: {
+		esbuildOptions: {
+			target: 'es2020',
+		},
+	},
+	esbuild: {
+		// https://github.com/vitejs/vite/issues/8644#issuecomment-1159308803
+		logOverride: { 'this-is-undefined-in-esm': 'silent' },
+	},
 	plugins: [
-		react(),
-	
+		react({
+			babel: {
+				plugins: [
+					'babel-plugin-macros',
+					[
+						'@emotion/babel-plugin-jsx-pragmatic',
+						{
+							export: 'jsx',
+							import: '__cssprop',
+							module: '@emotion/react',
+						},
+					],
+					['@babel/plugin-transform-react-jsx', { pragma: '__cssprop' }, 'twin.macro'],
+				],
+			},
+		}),
+
 		svgr({
 			// svgr options: https://react-svgr.com/docs/options/
 			svgrOptions: {
-			  // ...
+				// ...
 			},
-		  
+
 			// esbuild options, to transform jsx to js
 			esbuildOptions: {
-			  // ...
+				// ...
 			},
-		  
+
 			// A minimatch pattern, or array of patterns, which specifies the files in the build the plugin should include.
-			include: "**/*.svg?react",
-		  
+			include: '**/*.svg?react',
+
 			//  A minimatch pattern, or array of patterns, which specifies the files in the build the plugin should ignore. By default no files are ignored.
-			exclude: "",
-		  })
-],
+			exclude: '',
+		}),
+	],
 
 	css: {
 		preprocessorOptions: {
@@ -35,10 +59,10 @@ export default defineConfig({
 			},
 		},
 	},
-	server:{
-		host:true,
-		strictPort:true,
-		port:3000
+	server: {
+		host: true,
+		strictPort: true,
+		port: 3000,
 	},
 	assetsInclude: /\.(svg)$/,
 });

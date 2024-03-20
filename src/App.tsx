@@ -1,5 +1,5 @@
 
-import './App.css'
+import './utils.css'
 
 import PortPng from './assets/login/port.png';
 

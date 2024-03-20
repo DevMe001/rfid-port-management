@@ -1,0 +1,68 @@
+:root {
+    --primary: #032868;
+    --secondary: #1342A4;
+    --customDarkBlue: #1342A4;
+    --accent: #D15331;
+    --navy: #091B40;
+    --dark: #150710;
+    --lite: #F1F0E8;
+    --default: #ffffff;
+}
+
+.nav-active{
+  justify-content: space-between;
+}
+
+.nav-active:hover{
+  justify-content: space-evenly;
+}
+
+.nav-list{
+  position: relative;
+  font-weight: 500;
+
+  border-bottom: 1.9px solid var(--default);
+}
+.nav-list:hover{
+  border-top-left-radius: 2.1rem;
+  border-bottom-left-radius: 2.1rem;
+  background: var(--default);
+  color: var(--navy);
+  font-weight: 500;
+  cursor: pointer;
+
+}
+
+
+.nav-list:hover::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: -50px;
+    width: 50px;
+    height: 50px;
+    background-color: transparent;
+    border-radius: 50%;
+    box-shadow: 35px 35px 0 10px #ffffff;
+    pointer-events: none;
+}
+
+.nav-list:hover::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: -50px;
+    width: 50px;
+    height: 50px;
+    background-color: transparent;
+    border-radius: 50%;
+    box-shadow: 35px -35px 0 10px #ffffff;
+    pointer-events: none;
+}
+
+
+.nav-item:hover{
+  color:var(--navy);
+  font-weight: 700;
+ 
+}

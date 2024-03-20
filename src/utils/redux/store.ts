@@ -8,14 +8,18 @@ import {FLUSH, PAUSE, PERSIST, Persistor, REGISTER, REHYDRATE, persistReducer, p
 import storage from 'redux-persist/lib/storage';
 import { authService } from '../../api-query/auth-api';
 import authReducers from './slicer/authSlice';
+import { scheduleService } from '../../api-query/schedule-list.api';
+import passengerReducers from './slicer/passengerSlice';
 
 
 // creates reducers
 const rootReducers = combineReducers({
-    // define api here
-    [authService.reducerPath] : authService.reducer,
-    authUser: authReducers,
-})
+	// define api here
+	[authService.reducerPath]: authService.reducer,
+	authUser: authReducers,
+	[scheduleService.reducerPath]: scheduleService.reducer,
+	countPassenger: passengerReducers,
+});
 // create persistor key
 const peristorConfig = {
     key:'port-management',
@@ -42,6 +46,7 @@ const store = configureStore({
     }).concat(
         // define midleware
         authService.middleware,
+        scheduleService.middleware,
         logger
     ),
     devTools:process.env.NODE_ENV != 'production'

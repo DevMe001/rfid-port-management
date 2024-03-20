@@ -6,10 +6,16 @@ import withSnackbar from '../common/components/notistack';
 import PrivateRoute from './private/protected-route';
 import PublicRoute from './public';
 import HomePage from '../modules/onboarding-flow/homepage';
+import BuyerDashboard from '../modules/buyers/dashboard/user-dashboard';
+import BuyerBooking from '../modules/buyers/booking';
+import BuyerBookingById from '../modules/buyers/addbooking';
 
 
 const LoginwithSnackbar = withSnackbar(Login);
 const HomewithSnachbard = withSnackbar(HomePage);
+const BuyerDashboardwithSnachbard = withSnackbar(BuyerDashboard);
+const BuyerBookingwithSnackbar = withSnackbar(BuyerBooking);
+const BuyerBookingByIdwithSnackbar = withSnackbar(BuyerBookingById);
 
 
 const Router = createBrowserRouter([
@@ -26,6 +32,22 @@ const Router = createBrowserRouter([
 					<PublicRoute url={'/dashboard'}>
 						<LoginwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />
 					</PublicRoute>
+				),
+			},
+			{
+				path: '/booking/:bookId',
+				element: <BuyerBookingByIdwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />,
+			},
+			{
+				path: '/booking',
+				element: <BuyerBookingwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />,
+			},
+			{
+				path: '/user-dasboard',
+				element: (
+					<PrivateRoute>
+						<BuyerDashboardwithSnachbard anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />
+					</PrivateRoute>
 				),
 			},
 			{
