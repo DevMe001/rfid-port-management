@@ -1,5 +1,5 @@
-import  React,{ useEffect, useState } from 'react'
-import { useGetBookignScheduleQuery } from '../../../api-query/schedule-list.api';
+import React, { useEffect, useState, ChangeEvent } from 'react';
+import { useGetBookingScheduleQuery } from '../../../api-query/schedule-list.api';
 import { enqueueSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import RenderIf from '../../../common/components/ui/render-if';
@@ -16,7 +16,8 @@ import PopupModal from '../../../common/widget/modal/popup.,modal';
 import { PiUsersThreeFill } from 'react-icons/pi';
 import { IoAddCircleOutline } from 'react-icons/io5';
 import { FiMinusCircle } from 'react-icons/fi';
-import { storePassengerNumber } from '../../../utils/redux/slicer/passengerSlice';
+import { PassengerClass, storePassengerNumber } from '../../../utils/redux/slicer/passengerSlice';
+import waitSec from '../../../utils/setTimeout';
 
 
 interface Counters {
@@ -32,10 +33,15 @@ const initialCounters: Counters = {
 	minor: 0,
 };
 
+interface FareClass {
+	isActiveError?: boolean;
+	fare_type?: PassengerClass;
+}
+
 const BookingRecentList: React.FC = () => {
 	// const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
-	const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: false, skip: false });
+	const { data, isError } = useGetBookingScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 	const navigate = useNavigate();
 	const { onOpen } = useToggleAuth();
 	const user = useAppSelector((state) => state.authUser);
@@ -43,6 +49,11 @@ const BookingRecentList: React.FC = () => {
 	const [selected, setSelected] = useState<BookingSchedules | Record<string, any>>({});
 	const [dropdown, setDropdown] = useState<boolean>(false);
 	const [{ student, regular, adult, minor }, setCounters] = useState<Counters>(initialCounters);
+
+	const [{ isActiveError, fare_type }, setFareClass] = useState<FareClass>({
+		isActiveError: false,
+		fare_type: '',
+	});
 
 	useEffect(() => {
 		if (isError) {
@@ -67,7 +78,13 @@ const BookingRecentList: React.FC = () => {
 	const onBoxShow = () => {
 		setDropdown(!dropdown);
 	};
+	
 
+const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
+	const selectedClass: PassengerClass = e.target.value as PassengerClass;
+	console.log(selectedClass);
+	setFareClass({ fare_type: selectedClass });
+};
 	//  const increment = (type: keyof Counters) => {
 	// 		setCounters((prevCounters) => ({
 	// 			...prevCounters,
@@ -118,10 +135,18 @@ const BookingRecentList: React.FC = () => {
 
 	const dispatch = useAppDispatch();
 
-	const onRouteBookingById = (id: string) => {
+	const onRouteBookingById = async(id: string) => {
 		if (totalPassenger > 0) navigate(`/booking/${id}`);
 
-		dispatch(storePassengerNumber({ totalCount: totalPassenger, adult: adult, student: student, regular: regular, minor: minor }));
+		if(isEmpty(fare_type)){
+			
+				setFareClass({ isActiveError: true });
+					await waitSec(1000);
+				setFareClass({ isActiveError: false });
+
+		}
+
+		dispatch(storePassengerNumber({ totalCount: totalPassenger, adult: adult, student: student, regular: regular, minor: minor, passengerClass: fare_type }));
 	};
 
 	function dateArrival(arrivalSchedule: string): string {
@@ -148,12 +173,13 @@ const BookingRecentList: React.FC = () => {
 	return (
 		<>
 			<RenderIf value={!isEmpty(data) || !isUndefined(data)}>
-				<div className='max-w-[45rem] mx-auto w-full h-[8rem] py-2 '>
+				<div className='max-w-[45rem] mx-auto w-full h-[8rem] mt-8 '>
 					<h2 className='font-bold'>Recommended</h2>
+					<hr className='borderGray mt-2' />
 					{!isEmpty(data) &&
-						data?.map((schedule: BookingSchedules, i) => (
+						data?.map((schedule: BookingSchedules) => (
 							<>
-								<div key={i} className='relative flex justify-between gap-1 border border-1 border-gray-200 my-4 bg-white p-5 rounded-md'>
+								<div key={schedule.schedule_id} className='relative flex justify-between gap-1 border border-1 border-gray-200 my-4 bg-white p-5 rounded-md'>
 									<div className='flex flex-col gap-2 indicator w-full px-4'>
 										<div className='flex justify-between items-start mb-2'>
 											<p className='ml-5'>Arrival date:</p>
@@ -192,11 +218,14 @@ const BookingRecentList: React.FC = () => {
 								<label htmlFor='passengerClass' className='mb-1 font-medium'>
 									Select fare class
 								</label>
-								<select name='passengerClass' id='passengerClass' className='w-full borderGray text-navy'>
+								<select name='passengerClass' id='passengerClass' className='w-full borderGray text-navy' onChange={handlerPassengerClass}>
 									<option value=''>Choose type</option>
 									<option value='economy'>Economy Class</option>
 									<option value='tourist'>Tourist Class</option>
 								</select>
+								<RenderIf value={isActiveError}>
+									<span className='text-red-400 font-medium text-center'>Field is not empty.</span>
+								</RenderIf>
 							</div>
 
 							<div>
@@ -204,7 +233,7 @@ const BookingRecentList: React.FC = () => {
 								<label htmlFor='' className='font-medium'>
 									Number of passengers
 								</label>
-								<div onClick={onBoxShow} className='w-[20rem] h-[2.5rem]text-navy borderLite passenger-box'>
+								<div onClick={onBoxShow} className='w-[20rem] h-[2.5rem]text-navy borderGray passenger-box'>
 									<p className='flex gap-2 items-baseline p-2'>
 										<span>
 											<PiUsersThreeFill />

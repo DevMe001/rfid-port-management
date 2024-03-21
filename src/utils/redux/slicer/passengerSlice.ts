@@ -6,7 +6,11 @@ export type NumberOfPassenger = {
 	student: number;
 	regular: number;
 	minor: number;
+	passengerClass?: PassengerClass;
 };
+
+export type PassengerClass = 'economic' | 'tourist' | string;
+
 
 
 const initialState: NumberOfPassenger = {

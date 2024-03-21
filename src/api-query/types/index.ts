@@ -18,5 +18,11 @@ type Vehicle = {
 
 
 
+ type VehicleType={
+	vehicle_id:string;
+	vehicletype_name:string;
+	carrier_fee:number;
+}
 
-export type { BookingSchedules };
+
+export type { BookingSchedules, VehicleType };

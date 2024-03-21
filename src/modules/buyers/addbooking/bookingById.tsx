@@ -14,17 +14,33 @@ import { MdEventSeat } from 'react-icons/md';
 
 import { FaRestroom } from 'react-icons/fa';
 import clsx from 'clsx';
+import waitSec from '../../../utils/setTimeout';
+import ImageCircleRound from '../../../common/components/ui/avatar.component';
+import { MdPostAdd } from 'react-icons/md';
+import CustomButton from '../../../common/components/ui/button.componetnt';
+import { useGetBookingVehicleTypeQuery } from '../../../api-query/schedule-list.api';
+import { CgRemoveR } from 'react-icons/cg';
 
 interface Passenger {
 	firstName: string;
 	lastName: string;
 	age: string;
 	gender: string;
-	bdate: string;
+	bdate?: string;
 	seat: string;
-	seatNumber:string,
+	seatNumber: number;
 	fare_type: string;
+	vehicleChosen?: VehiclePassenger;
 }
+
+interface VehiclePassenger {
+	owner_name: string;
+	plate_number: string;
+	vehicle_id: string;
+}
+
+
+
 
 const passengerSchema = Yup.object().shape({
 	firstName: Yup.string().required('First name is required'),
@@ -35,6 +51,7 @@ const passengerSchema = Yup.object().shape({
 	seat: Yup.string(),
 	seatNumber: Yup.string(),
 	fare_type: Yup.string(),
+	vehicleChosen: Yup.object(),
 });
 
 const formSchema = Yup.object().shape({
@@ -52,14 +69,20 @@ const formSchema = Yup.object().shape({
 
 
 const BookingById:React.FC = () => {
+
+
+	const { data:vehiclesAvailable} = useGetBookingVehicleTypeQuery({}, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
+
 	const [toggle] = onToggleNavHomepageMobile();
 	const passenger = useAppSelector((state) => state.countPassenger);
 	// const [displayError, setDisplayError] = useState<string>('');
 	const [seatChosen, selectedSeat] = useState<string>('');
 	const [seatCall, seatTagLine] = useState<number>(0);
+	// const [seatArrNumber, setSeatNumberArr] = useState<number[]>([]);
 	const [selectedId, setSelectedId] = useState<string>('');
 	const [seatSelectedNumber, setSelectedSeatNumber] = useState<string>('');
 	const [getDisplayPassenger,setDisplayValue] = useState<any>({});
+	const [passengerVehicle,setPassengerVehicle] = useState<boolean>(false);
 
 		const [getSeat, reserveSeat] = onToggleBookingModal();
 
@@ -75,7 +98,19 @@ const BookingById:React.FC = () => {
 	};
 
 
-	const onSeatAssigned = (seatNumber: string, seat: number, formikProps: FormikProps<Passenger>) => {
+	const onPassengerVehicle = (type: string,fieldType:string, index: number, formikProps: FormikProps<any>) => {
+		setPassengerVehicle(!passengerVehicle);
+
+		if(type == 'remove'){
+				formikProps.setFieldValue(`${fieldType}.${index}.vehicleChosen.vehicle_id`,'');
+				formikProps.setFieldValue(`${fieldType}.${index}.vehicleChosen.owner_name`,'');
+				formikProps.setFieldValue(`${fieldType}.${index}.vehicleChosen.plate_number`,'');
+		}
+
+	
+	};
+
+	const onSeatAssigned = async(seatNumber: string, seat: number, formikProps: FormikProps<Passenger>) => {
 
 		selectedSeat(seatNumber);
 
@@ -136,14 +171,16 @@ const BookingById:React.FC = () => {
 			data = seat - 37;
 		}
 
+		// setSeatNumberArr((current) => [...current, data]);
 		seatTagLine(data);
+		await waitSec(1500);
 
-		reserveSeat(false);
+		reserveSeat(!getSeat);
 
 		document.body.style.overflow = '';
 
 		formikProps.setFieldValue(selectedId, seatNumber);
-		formikProps.setFieldValue(seatSelectedNumber, seatNumber);
+		formikProps.setFieldValue(seatSelectedNumber, data);
 	};
 
 const renderSeats = (formikProps: FormikProps<Passenger>) => {
@@ -223,7 +260,6 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							lastName: '',
 							age: 0,
 							gender: '',
-							bdate: '',
 							fare_type: 'adult',
 							seat: 0,
 							seatNumber: 0,
@@ -233,7 +269,6 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							lastName: '',
 							age: 0,
 							gender: '',
-							bdate: '',
 							fare_type: 'student',
 							seat: 0,
 							seatNumber: 0,
@@ -243,7 +278,6 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							lastName: '',
 							age: 0,
 							gender: '',
-							bdate: '',
 							fare_type: 'minor',
 							seat: 0,
 							seatNumber: 0,
@@ -253,7 +287,6 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							lastName: '',
 							age: 0,
 							gender: '',
-							bdate: '',
 							fare_type: 'regular',
 							seat: 0,
 							seatNumber: 0,
@@ -335,9 +368,9 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 									<label htmlFor={`adults.${index}.bdate`} className='font-medium text-navy'>
 										Birthdate
 									</label>
-									<Field id={`adult.${index}.bdate`} name={`adult.${index}.bdate`} placeholder='Birthdate' type='date' />
+									<Field id={`adult.${index}.bdate`} name={`adultPassengers.${index}.bdate`} placeholder='Birthdate' type='date' />
 									<ErrorMessage
-										name={`adult.${index}.bdate`}
+										name={`adultPassengers.${index}.bdate`}
 										render={(msg) => (
 											<div style={{ color: '#f10000' }} className='error'>
 												{msg}
@@ -346,13 +379,77 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 									/>
 									<Field type='hidden' id={`adult.${index}.seat`} name={`adultPassengers.${index}.seat`} />
 									<Field type='hidden' id={`adult.${index}.fare_type`} name={`adultPassengers.${index}.fare_type`} value='adult' />
-									<Field type='hidden' id={`adult.${index}.seatNumber`} name={`studentPassengers.${index}.seatNumber`} />
-
+									<Field type='hidden' id={`adult.${index}.seatNumber`} name={`adultPassengers.${index}.seatNumber`} />
+									<RenderIf value={(formikProps.values.adultPassengers[index].seatNumber as number) !== 0}>
+										<div className='flex justify-center items-center'>
+											<ImageCircleRound className='w-10 h-10 p-6' label={formikProps.values.adultPassengers[index].seatNumber as number} />
+										</div>
+									</RenderIf>
 									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('adultPassengers', index)}>
 										Choose seat
 									</div>
+
+
+{/* vehicle */}
+									<label htmlFor='addVehicle' className='text-navy font-medium'>
+										Add vehicle (Optional)
+									</label>
+									<hr />
+									<RenderIf value={!passengerVehicle}>
+										<div id='addVehicle' className='flex justify-end'>
+											<CustomButton onClick={() => onPassengerVehicle('add', 'adultPassengers', index, formikProps)} label={<MdPostAdd size={20} />} className='bg-accent text-white py-2 px-5' />
+										</div>
+									</RenderIf>
+
+									<RenderIf value={passengerVehicle}>
+										<div id='removeVehicle' className='flex justify-end'>
+											<CustomButton onClick={() => onPassengerVehicle('remove', 'adultPassengers', index, formikProps)} label={<CgRemoveR size={20} />} className='bg-accent text-white py-2 px-5' />
+										</div>
+									</RenderIf>
+
+									<RenderIf value={passengerVehicle}>
+										{!isEmpty(vehiclesAvailable) && (
+											<Field id={`adults.${index}.vehicle.vehicleChosen`} as='select' name={`adultPassengers.${index}.vehicleChosen.vehicle_id`}>
+												<option value=''>Select vehicle</option>
+												{vehiclesAvailable?.map((vehicle) => (
+													<option value={vehicle.vehicle_id}>
+														{vehicle.vehicletype_name} &nbsp; (₱{vehicle.carrier_fee})
+													</option>
+												))}
+											</Field>
+										)}
+
+										<ErrorMessage
+											name={`adultPassengers.${index}.vehicleChosen.vehicle_id`}
+											render={(msg) => (
+												<div style={{ color: '#f10000' }} className='error'>
+													{msg}
+												</div>
+											)}
+										/>
+										<Field id={`adult.${index}.owner_name`} className='uppercase' name={`adultPassengers.${index}.vehicleChosen.owner_name`} placeholder='Owner Name' type='text' />
+										<ErrorMessage
+											name={`adultPassengers.${index}.vehicleChosen.owner_name`}
+											render={(msg) => (
+												<div style={{ color: '#f10000' }} className='error'>
+													{msg}
+												</div>
+											)}
+										/>
+										<Field id={`adult.${index}.plate_number`} className='uppercase' name={`adultPassengers.${index}.vehicleChosen.plate_number`} placeholder='Plate Number' type='text' />
+										<ErrorMessage
+											name={`adultPassengers.${index}.vehicleChosen.plate_number`}
+											render={(msg) => (
+												<div style={{ color: '#f10000' }} className='error'>
+													{msg}
+												</div>
+											)}
+										/>
+									</RenderIf>
 								</div>
 							))}
+
+							{/* students */}
 
 							{[...Array(formikProps.values.students)].map((_, index) => (
 								<div key={`students-${index}`} className='flex flex-col gap-5 border border-1 borderLite w-8/12 mx-auto p-10 rounded my-5'>
@@ -425,6 +522,12 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 									<Field type='hidden' id={`student.${index}.seat`} name={`studentPassengers.${index}.seat`} />
 									<Field type='hidden' id={`student.${index}.fare_type`} name={`studentPassengers.${index}.fare_type`} value='student' />
 									<Field type='hidden' id={`student.${index}.seatNumber`} name={`studentPassengers.${index}.seatNumber`} />
+
+									<RenderIf value={(formikProps.values.studentPassengers[index].seatNumber as number) !== 0}>
+										<div className='flex justify-center items-center'>
+											<ImageCircleRound className='w-10 h-10' label={formikProps.values.studentPassengers[index].seatNumber as number} />
+										</div>
+									</RenderIf>
 
 									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('studentPassengers', index)}>
 										Choose seat
@@ -503,6 +606,11 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 									<Field type='hidden' id={`minor.${index}.fare_type`} name={`minorPassengers.${index}.fare_type`} value='minor' />
 									<Field type='hidden' id={`minor.${index}.seatNumber`} name={`minorPassengers.${index}.seatNumber`} />
 
+									<RenderIf value={(formikProps.values.minorPassengers[index].seatNumber as number) !== 0}>
+										<div className='flex justify-center items-center'>
+											<ImageCircleRound className='w-10 h-10' label={formikProps.values.minorPassengers[index].seatNumber as number} />
+										</div>
+									</RenderIf>
 									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('minorPassengers', index)}>
 										Choose seat
 									</div>
@@ -581,6 +689,12 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 									<Field type='hidden' id={`regulars.${index}.fare_type`} name={`regularPassengers.${index}.fare_type`} value='regular' />
 									<Field type='hidden' id={`regulars.${index}.seatNumber`} name={`regularPassengers.${index}.seatNumber`} />
 
+									<RenderIf value={(formikProps.values.regularPassengers[index].seatNumber as number) !== 0}>
+										<div className='flex justify-center items-center'>
+											<ImageCircleRound className='w-10 h-10' label={formikProps.values.regularPassengers[index].seatNumber as number} />
+										</div>
+									</RenderIf>
+
 									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('regularPassengers', index)}>
 										Choose seat
 									</div>
@@ -588,9 +702,7 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							))}
 
 							<div className='flex justify-center items-center w-full'>
-								<button className='btn bg-accent text-white' type='submit'>
-									Submit
-								</button>
+								<CustomButton label='Submit' type='submit' />
 							</div>
 
 							<RenderIf value={!isEmpty(getDisplayPassenger)}>
@@ -599,7 +711,7 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 
 							<RenderIf value={getSeat}>
 								<PopupModal>
-									<h2 className='font-medium text-navy text-center my-5'>{isEmpty(seatCall) ? 'Reserve your seat now' : `Seat # ${seatCall}`}</h2>
+									<h2 className='font-medium text-navy text-center my-5'>{isEmpty(seatChosen) ? 'Reserve your seat now' : `Seat # ${seatCall}`}</h2>
 									<div style={{ display: 'flex', flexDirection: 'column' }}>{renderSeats(formikProps as any)}</div>
 								</PopupModal>
 							</RenderIf>
