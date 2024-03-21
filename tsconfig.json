@@ -9,7 +9,9 @@
     "types": [
       "node",
       "vite/client",
-      "vite-plugin-svgr/client"
+      "vite-plugin-svgr/client",
+      "vite",
+      "@vitejs/plugin-react"
       ],
     /* Bundler mode */
     "moduleResolution": "bundler",

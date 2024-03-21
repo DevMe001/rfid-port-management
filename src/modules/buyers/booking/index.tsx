@@ -1,4 +1,3 @@
-import React from 'react'
 import RenderIf from '../../../common/components/ui/render-if';
 import FooterMd from '../../onboarding-flow/layout/homepage-footer-md';
 import FooterXS from '../../onboarding-flow/layout/homepage-footer-sm';

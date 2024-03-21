@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import  React,{ useEffect, useState } from 'react'
 import { useGetBookignScheduleQuery } from '../../../api-query/schedule-list.api';
 import { enqueueSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
@@ -32,46 +32,41 @@ const initialCounters: Counters = {
 	minor: 0,
 };
 
-const BookingRecentList = () => {
+const BookingRecentList: React.FC = () => {
+	// const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
-  // const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+	const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: false, skip: false });
+	const navigate = useNavigate();
+	const { onOpen } = useToggleAuth();
+	const user = useAppSelector((state) => state.authUser);
+	const [bookingModal, setBookingModal] = onToggleBookingModal();
+	const [selected, setSelected] = useState<BookingSchedules | Record<string, any>>({});
+	const [dropdown, setDropdown] = useState<boolean>(false);
+	const [{ student, regular, adult, minor }, setCounters] = useState<Counters>(initialCounters);
 
-
-  const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: false, skip: false });
-  const navigate = useNavigate();
-  const {onOpen} = useToggleAuth();
-  const user = useAppSelector((state) => state.authUser);
-  const [bookingModal, setBookingModal] = onToggleBookingModal();
-  const [selected, setSelected] = useState<BookingSchedules | Record<string,any>>({});
-  const [dropdown, setDropdown] = useState<boolean>(false);
-  const [{ student, regular, adult, minor }, setCounters] = useState<Counters>(initialCounters);
-
-  useEffect(() => {
+	useEffect(() => {
 		if (isError) {
-      enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
-      navigate('/');
+			enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
+			navigate('/');
 		}
 	}, [isError]);
 
+	const onBooking = (schedule: BookingSchedules) => {
+		window.scrollTo({
+			top: 0,
+			behavior: 'smooth',
+		});
+		document.body.style.overflow = 'hidden';
 
-   const onBooking = (schedule:BookingSchedules) => {
-			window.scrollTo({
-				top: 0,
-				behavior: 'smooth',
-			});
-      document.body.style.overflow = 'hidden';
+		setSelected(schedule);
 
-      setSelected(schedule);
+		if (isEmpty(user.accessToken)) onOpen;
+		else setBookingModal(!bookingModal);
+	};
 
-     if(isEmpty(user.accessToken)) onOpen;
-     else setBookingModal(!bookingModal);
-
-		};
-
-
-  const onBoxShow = ()=>{
-    setDropdown(!dropdown);
-  };
+	const onBoxShow = () => {
+		setDropdown(!dropdown);
+	};
 
 	//  const increment = (type: keyof Counters) => {
 	// 		setCounters((prevCounters) => ({
@@ -112,47 +107,45 @@ const BookingRecentList = () => {
 		});
 	};
 
-		const decrement = (type: keyof Counters) => {
-			setCounters((prevCounters) => ({
-				...prevCounters,
-				[type]: prevCounters[type] > 0 ? prevCounters[type] - 1 : 0,
-			}));
-		};
-
-
-		let totalPassenger = adult + student + regular + minor;
-
-
-const dispatch = useAppDispatch();
-
-		const onRouteBookingById = (id:string)=>{
-			if(totalPassenger > 0) navigate(`/booking/${id}`);
-
-			dispatch(storePassengerNumber({ totalCount: totalPassenger ,adult:adult,student:student,regular:regular,minor:minor}));
-		}
-
-function dateArrival(arrivalSchedule: string): string {
-	const options: Intl.DateTimeFormatOptions = {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-		hour: 'numeric',
-		minute: 'numeric',
-		second: 'numeric'
+	const decrement = (type: keyof Counters) => {
+		setCounters((prevCounters) => ({
+			...prevCounters,
+			[type]: prevCounters[type] > 0 ? prevCounters[type] - 1 : 0,
+		}));
 	};
-  	// 	timeZone: 'UTC'
+
+	let totalPassenger = adult + student + regular + minor;
+
+	const dispatch = useAppDispatch();
+
+	const onRouteBookingById = (id: string) => {
+		if (totalPassenger > 0) navigate(`/booking/${id}`);
+
+		dispatch(storePassengerNumber({ totalCount: totalPassenger, adult: adult, student: student, regular: regular, minor: minor }));
+	};
+
+	function dateArrival(arrivalSchedule: string): string {
+		const options: Intl.DateTimeFormatOptions = {
+			year: 'numeric',
+			month: 'long',
+			day: 'numeric',
+			hour: 'numeric',
+			minute: 'numeric',
+			second: 'numeric',
+		};
+		// 	timeZone: 'UTC'
 		// timeZoneName: 'short'
 
-	let dateLocale = new Date(arrivalSchedule);
+		let dateLocale = new Date(arrivalSchedule);
 
-	if (isNaN(dateLocale.getTime())) {
-		return 'Invalid Date';
+		if (isNaN(dateLocale.getTime())) {
+			return 'Invalid Date';
+		}
+
+		return dateLocale.toLocaleString('en-US', options);
 	}
 
-	return dateLocale.toLocaleString('en-US', options);
-}
-
-  return (
+	return (
 		<>
 			<RenderIf value={!isEmpty(data) || !isUndefined(data)}>
 				<div className='max-w-[45rem] mx-auto w-full h-[8rem] py-2 '>
@@ -195,10 +188,23 @@ function dateArrival(arrivalSchedule: string): string {
 						))}
 					<RenderIf value={bookingModal == true}>
 						<PopupModal>
+							<div className='flex flex-col flex-1 w-full my-5'>
+								<label htmlFor='passengerClass' className='mb-1 font-medium'>
+									Select fare class
+								</label>
+								<select name='passengerClass' id='passengerClass' className='w-full borderGray text-navy'>
+									<option value=''>Choose type</option>
+									<option value='economy'>Economy Class</option>
+									<option value='tourist'>Tourist Class</option>
+								</select>
+							</div>
+
 							<div>
 								{/* add passenger numbers */}
-								<label htmlFor='' className='font-medium'>Number of passengers</label>
-								<div onClick={onBoxShow} className='w-[20rem] h-[2.5rem] bg-lite text-navy borderLite passenger-box'>
+								<label htmlFor='' className='font-medium'>
+									Number of passengers
+								</label>
+								<div onClick={onBoxShow} className='w-[20rem] h-[2.5rem]text-navy borderLite passenger-box'>
 									<p className='flex gap-2 items-baseline p-2'>
 										<span>
 											<PiUsersThreeFill />
@@ -209,49 +215,49 @@ function dateArrival(arrivalSchedule: string): string {
 									</p>
 								</div>
 								<RenderIf value={dropdown}>
-									<div onMouseLeave={() => setDropdown(false)} className='w-[20rem] h-[8rem] bg-lite text-navy borderLite cursor-pointer animate-slideDown px-5 py-2'>
-										
-											{/* adults */}
-											<div className='flex justify-between items-center'>
-												<div className='w-6/12'>Adult</div>
-												<div className='flex justify-between w-6/12'>
-													<FiMinusCircle onClick={() => decrement('adult')} />
-													<span className='font-medium'>{adult}</span>
-													<IoAddCircleOutline onClick={() => increment('adult')} />
-												</div>
+									<div onMouseLeave={() => setDropdown(false)} className='w-[20rem] h-[8rem] text-navy borderLite cursor-pointer animate-slideDown px-5 py-2'>
+										{/* adults */}
+										<div className='flex justify-between items-center'>
+											<div className='w-6/12'>Adult</div>
+											<div className='flex justify-between w-6/12'>
+												<FiMinusCircle onClick={() => decrement('adult')} />
+												<span className='font-medium'>{adult}</span>
+												<IoAddCircleOutline onClick={() => increment('adult')} />
 											</div>
-											{/* student */}
-											<div className='flex justify-between items-center'>
-												<div className='w-6/12'>Students</div>
-												<div className='flex justify-between w-6/12'>
-													<FiMinusCircle onClick={() => decrement('student')} />
-													<span className='font-medium'>{student}</span>
-													<IoAddCircleOutline onClick={() => increment('student')} />
-												</div>
+										</div>
+										{/* student */}
+										<div className='flex justify-between items-center'>
+											<div className='w-6/12'>Students</div>
+											<div className='flex justify-between w-6/12'>
+												<FiMinusCircle onClick={() => decrement('student')} />
+												<span className='font-medium'>{student}</span>
+												<IoAddCircleOutline onClick={() => increment('student')} />
 											</div>
-											{/* regular */}
-											<div className='flex justify-between items-center'>
-												<div className='w-6/12'>Regular</div>
-												<div className='flex justify-between w-6/12'>
-													<FiMinusCircle onClick={() => decrement('regular')} />
-													<span className='font-medium'>{regular}</span>
-													<IoAddCircleOutline onClick={() => increment('regular')} />
-												</div>
+										</div>
+										{/* regular */}
+										<div className='flex justify-between items-center'>
+											<div className='w-6/12'>Regular</div>
+											<div className='flex justify-between w-6/12'>
+												<FiMinusCircle onClick={() => decrement('regular')} />
+												<span className='font-medium'>{regular}</span>
+												<IoAddCircleOutline onClick={() => increment('regular')} />
 											</div>
-											{/* minor */}
-											<div className='flex justify-between items-center'>
-												<div className='w-6/12'>Minor</div>
-												<div className='flex justify-between w-6/12'>
-													<FiMinusCircle onClick={() => decrement('minor')} />
-													<span className='font-medium'>{minor}</span>
-													<IoAddCircleOutline onClick={() => increment('minor')} />
-												</div>
+										</div>
+										{/* minor */}
+										<div className='flex justify-between items-center'>
+											<div className='w-6/12'>Minor</div>
+											<div className='flex justify-between w-6/12'>
+												<FiMinusCircle onClick={() => decrement('minor')} />
+												<span className='font-medium'>{minor}</span>
+												<IoAddCircleOutline onClick={() => increment('minor')} />
 											</div>
-									
+										</div>
 									</div>
 								</RenderIf>
 								<div className='flex justify-center my-5'>
-									<button className='btn bg-accent text-white text-sm' onClick={()=>onRouteBookingById(selected.schedule_id)}>Proceed</button>
+									<button className='btn bg-accent text-white text-sm' onClick={() => onRouteBookingById(selected.schedule_id)}>
+										Proceed
+									</button>
 								</div>
 							</div>
 						</PopupModal>
@@ -263,6 +269,6 @@ function dateArrival(arrivalSchedule: string): string {
 			</RenderIf>
 		</>
 	);
-}
+};
 
 export default BookingRecentList

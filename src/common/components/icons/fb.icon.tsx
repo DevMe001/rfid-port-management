@@ -1,7 +1,10 @@
 import * as React from "react"
 import { JSX } from "react/jsx-runtime"
 import Immutable from "../../../immutable/constant";
-const FacebookIcon: React.FC<JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>> = (props) => (
+
+
+
+const FacebookIcon: React.FC<JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>> = () => (
 	<div className='flex justify-between items-center btn bg-blue-800  gap-2 my-5' onClick={() => (window.location.href = `${Immutable.API}/auth/facebook`)}>
 		<div className='btn bg-blue-800 w-[15rem] h-[3rem] '>
 			<div className='flex justify-center items-center h-full text-white font-semibold text-sm md:text-2xl'>
@@ -19,7 +22,6 @@ const FacebookIcon: React.FC<JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElem
 			xmlns='http://www.w3.org/2000/svg'
 			xmlSpace='preserve'
 			viewBox='0 0 512 512'
-			{...props}
 		>
 			<path
 				d='m511.96 142.534-1.374 11.223-17.101 135.204L456 326.445H260.256l-42.677-42.599h-47.485V106.805h47.485L323.315 0h49.318v26.797l-18.704 18.704v58.861h119.859z'

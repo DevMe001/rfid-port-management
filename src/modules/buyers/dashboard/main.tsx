@@ -8,8 +8,6 @@ import { useAppSelector } from '../../../utils/redux/store';
 import { Button, Label, TextInput, Datepicker } from 'flowbite-react';
 import { FaSave, FaRegUserCircle } from 'react-icons/fa';
 import { BiRfid } from 'react-icons/bi';
-import { DateRangePicker } from '../../../common/widget/calendar/date-range-picker';
-
 
 
 const listOrders = [
@@ -123,7 +121,6 @@ const DashboardUser = () => {
 											Balance ( ₱0.00 )
 										</label>
 									</div>
-									<DateRangePicker onUpdate={(values) => console.log(values)} initialDateFrom='2023-01-01' initialDateTo='2023-12-31' align='start' locale='en-GB' showCompare={false} />
 								</div>
 							</div>
 						</RenderIf>

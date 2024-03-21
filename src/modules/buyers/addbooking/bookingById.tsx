@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  React,{ useState } from 'react';
 import RenderIf from '../../../common/components/ui/render-if';
 import Stepper from '../../../common/widget/stepper';
 import { onToggleBookingModal, onToggleNavHomepageMobile } from '../../../utils/hooks/globa.state';
@@ -6,7 +6,7 @@ import { Formik, Field, Form, ErrorMessage, FormikProps } from 'formik';
 import { useAppSelector } from '../../../utils/redux/store';
 
 import * as Yup from 'yup';
-import { isEmpty, isNull } from 'lodash';
+import { isEmpty } from 'lodash';
 
 import '../styles/book-list.css'
 import PopupModal from '../../../common/widget/modal/popup.,modal';
@@ -51,10 +51,10 @@ const formSchema = Yup.object().shape({
 
 
 
-const BookingById = () => {
+const BookingById:React.FC = () => {
 	const [toggle] = onToggleNavHomepageMobile();
 	const passenger = useAppSelector((state) => state.countPassenger);
-	const [displayError, setDisplayError] = useState<string>('');
+	// const [displayError, setDisplayError] = useState<string>('');
 	const [seatChosen, selectedSeat] = useState<string>('');
 	const [seatCall, seatTagLine] = useState<number>(0);
 	const [selectedId, setSelectedId] = useState<string>('');
@@ -275,7 +275,7 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							<Field name='students' type='number' />
 							<Field name='minors' type='number' /> */}
 
-							{!isEmpty(displayError) && <div className='text-lite font-bold py-3 px-5 bg-accent text-center'>{displayError}</div>}
+							{/* {!isEmpty(displayError) && <div className='text-lite font-bold py-3 px-5 bg-accent text-center'>{displayError}</div>} */}
 
 							{[...Array(formikProps.values.adults)].map((_, index) => (
 								<div key={`adults-${index}`} className='flex flex-col gap-5 border border-1 borderLite w-8/12 mx-auto p-10 rounded my-5'>

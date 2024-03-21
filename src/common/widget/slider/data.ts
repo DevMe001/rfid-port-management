@@ -1,4 +1,3 @@
-import Hero from '../../../assets/home/hero.jpg';
 import Ship1 from '../../../assets/home/ship5.jpg';
 import Ship2 from '../../../assets/home/ship02.jpg';
 import Ship3 from '../../../assets/home/ship03.webp';

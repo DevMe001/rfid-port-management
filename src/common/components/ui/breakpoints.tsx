@@ -22,7 +22,7 @@ type Breakpoint = {
 	children: React.ReactNode;
 } & ComponentPropsWithRef<'div'>; // Define additional div props
 
-const ScreenWidth: React.FC<Breakpoint> = ({ sx, display, children, ...props }) => {
+const ScreenWidth: React.FC<Breakpoint> = ({ sx, display, children }) => {
 	const breakpointClass = sx
 		.map((size) => {
 			switch (size) {
@@ -45,7 +45,7 @@ const ScreenWidth: React.FC<Breakpoint> = ({ sx, display, children, ...props }) 
 	const displayClass = display === Display.none ? 'hidden' : display;
 
 	return (
-		<div className={clsx(breakpointClass, displayClass)} {...props}>
+		<div className={clsx(breakpointClass, displayClass)} >
 			{children}
 		</div>
 	);

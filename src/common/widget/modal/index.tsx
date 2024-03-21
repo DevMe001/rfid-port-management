@@ -1,5 +1,4 @@
-import React, { useCallback, useRef } from 'react';
-import { onToggleModal } from '../../../utils/hooks/globa.state';
+import React from 'react';
 import RenderIf from '../../components/ui/render-if';
 import clsx from 'clsx';
 import { RootState, useAppSelector } from '../../../utils/redux/store';
@@ -13,7 +12,7 @@ type ModalProps = {
 	onOpen: () => void;
 };
 
-const Modal: React.FC<ModalProps> = ({ label, children, onOpen }) => {
+const AuthModal: React.FC<ModalProps> = ({ label, children, onOpen }) => {
 	const { modal,modalRef } = useToggleAuth();
 
 	//   const [modal, setModal] = onToggleModal();
@@ -77,4 +76,4 @@ const Modal: React.FC<ModalProps> = ({ label, children, onOpen }) => {
 	);
 };
 
-export default Modal
+export default AuthModal;
