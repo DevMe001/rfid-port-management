@@ -2,11 +2,13 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 export type NumberOfPassenger = {
 	totalCount: number;
-	adult: number;
+	senior: number;
 	student: number;
 	regular: number;
-	minor: number;
+	child: number;
+	infant: number;
 	passengerClass?: PassengerClass;
+	
 };
 
 export type PassengerClass = 'economic' | 'tourist' | string;
@@ -15,10 +17,11 @@ export type PassengerClass = 'economic' | 'tourist' | string;
 
 const initialState: NumberOfPassenger = {
 	totalCount: 0,
-	adult: 0,
+	senior: 0,
 	student: 0,
 	regular: 0,
-	minor: 0,
+	child: 0,
+	infant: 0,
 };
 
 

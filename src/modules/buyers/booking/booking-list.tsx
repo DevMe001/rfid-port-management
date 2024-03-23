@@ -18,19 +18,23 @@ import { IoAddCircleOutline } from 'react-icons/io5';
 import { FiMinusCircle } from 'react-icons/fi';
 import { PassengerClass, storePassengerNumber } from '../../../utils/redux/slicer/passengerSlice';
 import waitSec from '../../../utils/setTimeout';
+import PassengerMenuList from './components/dropdown-passenger-list';
 
 
-interface Counters {
-	student: number;
+interface PassengerType{
+	senior: number;
 	regular: number;
-	adult: number;
-	minor: number;
+	student: number;
+	child: number;
+	infant: number;
+	
 }
-const initialCounters: Counters = {
-	student: 0,
+const initialPassengerClass: PassengerType = {
+	senior: 0,
 	regular: 0,
-	adult: 0,
-	minor: 0,
+	student: 0,
+	child: 0,
+	infant: 0,
 };
 
 interface FareClass {
@@ -48,7 +52,7 @@ const BookingRecentList: React.FC = () => {
 	const [bookingModal, setBookingModal] = onToggleBookingModal();
 	const [selected, setSelected] = useState<BookingSchedules | Record<string, any>>({});
 	const [dropdown, setDropdown] = useState<boolean>(false);
-	const [{ student, regular, adult, minor }, setCounters] = useState<Counters>(initialCounters);
+	const [{ senior, regular, student, child, infant }, setCounters] = useState<PassengerType>(initialPassengerClass);
 
 	const [{ isActiveError, fare_type }, setFareClass] = useState<FareClass>({
 		isActiveError: false,
@@ -92,17 +96,17 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 	// 		}));
 	// 	};
 
-	const increment = (type: keyof Counters) => {
+	const increment = (type: keyof PassengerType) => {
 		setCounters((prevCounters) => {
 			let incrementValue = 1; // Default increment value
 			// Check type and set maximum limits
-			if (type === 'minor') {
+			if (type === 'child' || type === 'infant') {
 				if (prevCounters[type] >= 0 && prevCounters[type] < 4) {
 					incrementValue = 1; // Increment allowed for minor
 				} else {
 					incrementValue = 0; // No increment allowed beyond 4
 				}
-			} else if (type === 'adult') {
+			} else if (type === 'senior') {
 				if (prevCounters[type] >= 0 && prevCounters[type] < 7) {
 					incrementValue = 1; // Increment allowed for adult, less than 7
 				} else {
@@ -124,14 +128,14 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 		});
 	};
 
-	const decrement = (type: keyof Counters) => {
+	const decrement = (type: keyof PassengerType) => {
 		setCounters((prevCounters) => ({
 			...prevCounters,
 			[type]: prevCounters[type] > 0 ? prevCounters[type] - 1 : 0,
 		}));
 	};
 
-	let totalPassenger = adult + student + regular + minor;
+	let totalPassenger = senior + student + regular + child + infant;
 
 	const dispatch = useAppDispatch();
 
@@ -146,7 +150,9 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 
 		}
 
-		dispatch(storePassengerNumber({ totalCount: totalPassenger, adult: adult, student: student, regular: regular, minor: minor, passengerClass: fare_type }));
+		dispatch(storePassengerNumber({ totalCount: totalPassenger, senior: senior, student: student, regular: regular, child: child,infant:infant, passengerClass: fare_type }));
+
+		setBookingModal(!bookingModal);
 	};
 
 	function dateArrival(arrivalSchedule: string): string {
@@ -173,7 +179,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 	return (
 		<>
 			<RenderIf value={!isEmpty(data) || !isUndefined(data)}>
-				<div className='max-w-[45rem] mx-auto w-full h-[8rem] mt-8 '>
+				<div className='max-w-[45rem] mx-auto w-full h-[8rem] mt-8'>
 					<h2 className='font-bold'>Recommended</h2>
 					<hr className='borderGray mt-2' />
 					{!isEmpty(data) &&
@@ -223,7 +229,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 									<option value='economy'>Economy Class</option>
 									<option value='tourist'>Tourist Class</option>
 								</select>
-								<RenderIf value={isActiveError}>
+								<RenderIf value={isActiveError as boolean}>
 									<span className='text-red-400 font-medium text-center'>Field is not empty.</span>
 								</RenderIf>
 							</div>
@@ -246,41 +252,16 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 								<RenderIf value={dropdown}>
 									<div onMouseLeave={() => setDropdown(false)} className='w-[20rem] h-[8rem] text-navy borderLite cursor-pointer animate-slideDown px-5 py-2'>
 										{/* adults */}
-										<div className='flex justify-between items-center'>
-											<div className='w-6/12'>Adult</div>
-											<div className='flex justify-between w-6/12'>
-												<FiMinusCircle onClick={() => decrement('adult')} />
-												<span className='font-medium'>{adult}</span>
-												<IoAddCircleOutline onClick={() => increment('adult')} />
-											</div>
-										</div>
-										{/* student */}
-										<div className='flex justify-between items-center'>
-											<div className='w-6/12'>Students</div>
-											<div className='flex justify-between w-6/12'>
-												<FiMinusCircle onClick={() => decrement('student')} />
-												<span className='font-medium'>{student}</span>
-												<IoAddCircleOutline onClick={() => increment('student')} />
-											</div>
-										</div>
-										{/* regular */}
-										<div className='flex justify-between items-center'>
-											<div className='w-6/12'>Regular</div>
-											<div className='flex justify-between w-6/12'>
-												<FiMinusCircle onClick={() => decrement('regular')} />
-												<span className='font-medium'>{regular}</span>
-												<IoAddCircleOutline onClick={() => increment('regular')} />
-											</div>
-										</div>
-										{/* minor */}
-										<div className='flex justify-between items-center'>
-											<div className='w-6/12'>Minor</div>
-											<div className='flex justify-between w-6/12'>
-												<FiMinusCircle onClick={() => decrement('minor')} />
-												<span className='font-medium'>{minor}</span>
-												<IoAddCircleOutline onClick={() => increment('minor')} />
-											</div>
-										</div>
+
+										<PassengerMenuList label='Senior/Pwd' count={senior} onIncrement={() => increment('senior')} onDecrement={() => decrement('senior')} />
+
+										<PassengerMenuList label='Student' count={student} onIncrement={() => increment('student')} onDecrement={() => decrement('student')} />
+
+										<PassengerMenuList label='Regular' count={regular} onIncrement={() => increment('regular')} onDecrement={() => decrement('regular')} />
+
+										<PassengerMenuList label='Child' count={child} onIncrement={() => increment('child')} onDecrement={() => decrement('child')} />
+
+										<PassengerMenuList label='Infant' count={infant} onIncrement={() => increment('infant')} onDecrement={() => decrement('infant')} />
 									</div>
 								</RenderIf>
 								<div className='flex justify-center my-5'>

@@ -1,4 +1,4 @@
-import  React,{ useState } from 'react';
+import  React,{ useEffect, useState } from 'react';
 import RenderIf from '../../../common/components/ui/render-if';
 import Stepper from '../../../common/widget/stepper';
 import { onToggleBookingModal, onToggleNavHomepageMobile } from '../../../utils/hooks/globa.state';
@@ -15,11 +15,10 @@ import { MdEventSeat } from 'react-icons/md';
 import { FaRestroom } from 'react-icons/fa';
 import clsx from 'clsx';
 import waitSec from '../../../utils/setTimeout';
-import ImageCircleRound from '../../../common/components/ui/avatar.component';
-import { MdPostAdd } from 'react-icons/md';
+
 import CustomButton from '../../../common/components/ui/button.componetnt';
-import { useGetBookingVehicleTypeQuery } from '../../../api-query/schedule-list.api';
-import { CgRemoveR } from 'react-icons/cg';
+
+import PassengerFormDetails from './components/passenger-form.component';
 
 interface Passenger {
 	firstName: string;
@@ -31,6 +30,7 @@ interface Passenger {
 	seatNumber: number;
 	fare_type: string;
 	vehicleChosen?: VehiclePassenger;
+	rangePrice?:number;
 }
 
 interface VehiclePassenger {
@@ -54,14 +54,18 @@ const passengerSchema = Yup.object().shape({
 	vehicleChosen: Yup.object(),
 });
 
+
 const formSchema = Yup.object().shape({
-	adults: Yup.number(),
+	seniorPwd: Yup.number(),
 	students: Yup.number(),
-	minors: Yup.number(),
-	adultPassengers: Yup.array().of(passengerSchema),
+	regulars: Yup.number(),
+	child: Yup.number(),
+	infant: Yup.number(),
+	seniorPwdPassenger: Yup.array().of(passengerSchema),
 	studentPassengers: Yup.array().of(passengerSchema),
-	minorPassengers: Yup.array().of(passengerSchema),
+	childPassengers: Yup.array().of(passengerSchema),
 	regularPassengers: Yup.array().of(passengerSchema),
+	infantPassengers:Yup.array().of(passengerSchema),
 });
 
 
@@ -70,8 +74,6 @@ const formSchema = Yup.object().shape({
 
 const BookingById:React.FC = () => {
 
-
-	const { data:vehiclesAvailable} = useGetBookingVehicleTypeQuery({}, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
 
 	const [toggle] = onToggleNavHomepageMobile();
 	const passenger = useAppSelector((state) => state.countPassenger);
@@ -85,6 +87,13 @@ const BookingById:React.FC = () => {
 	const [passengerVehicle,setPassengerVehicle] = useState<boolean>(false);
 
 		const [getSeat, reserveSeat] = onToggleBookingModal();
+
+
+		useEffect(() => {
+			if (!getSeat) {
+				document.body.style.overflow = '';
+			}
+		}, [getSeat]);
 
 	const onSeatReserve = (type: string, index: number) => {
 		reserveSeat(!getSeat);
@@ -245,24 +254,32 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 	return rows;
 };
 
+const onSeat = (type:string,index:number)=>{
+	onSeatReserve(type, index);
+
+}
+
 	return (
 		<RenderIf value={!toggle}>
-			<main className='col-start-1 -col-end-1 row-start-2 row-end-2 min-h-[40vh] h-auto'>
+			<main className='col-start-1 -col-end-1 row-start-2 row-end-2 min-h-[40vh] h-auto background-design'>
 				<Stepper />
 				<Formik
 					initialValues={{
-						adults: passenger.adult,
+						seniorPwd: passenger.senior,
 						students: passenger.student,
-						minors: passenger.minor,
 						regulars: passenger.regular,
-						adultPassengers: Array.from({ length: passenger.adult }, () => ({
+						child: passenger.child,
+						infant: passenger.infant,
+
+						seniorPwdPassenger: Array.from({ length: passenger.senior }, () => ({
 							firstName: '',
 							lastName: '',
 							age: 0,
 							gender: '',
-							fare_type: 'adult',
+							fare_type: 'senior',
 							seat: 0,
 							seatNumber: 0,
+							rangePrice: 757,
 						})),
 						studentPassengers: Array.from({ length: passenger.student }, () => ({
 							firstName: '',
@@ -272,15 +289,17 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							fare_type: 'student',
 							seat: 0,
 							seatNumber: 0,
+							rangePrice: 848,
 						})),
-						minorPassengers: Array.from({ length: passenger.minor }, () => ({
+						childPassengers: Array.from({ length: passenger.child }, () => ({
 							firstName: '',
 							lastName: '',
 							age: 0,
 							gender: '',
-							fare_type: 'minor',
+							fare_type: 'child',
 							seat: 0,
 							seatNumber: 0,
+							rangePrice: 530,
 						})),
 						regularPassengers: Array.from({ length: passenger.regular }, () => ({
 							firstName: '',
@@ -290,6 +309,18 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 							fare_type: 'regular',
 							seat: 0,
 							seatNumber: 0,
+							rangePrice:1060
+						})),
+
+						infantPassengers: Array.from({ length: passenger.infant }, () => ({
+							firstName: '',
+							lastName: '',
+							age: 0,
+							gender: '',
+							fare_type: 'infant',
+							seat: 0,
+							seatNumber: 0,
+							rangePrice:60
 						})),
 					}}
 					validationSchema={formSchema}
@@ -310,394 +341,38 @@ const renderSeats = (formikProps: FormikProps<Passenger>) => {
 
 							{/* {!isEmpty(displayError) && <div className='text-lite font-bold py-3 px-5 bg-accent text-center'>{displayError}</div>} */}
 
-							{[...Array(formikProps.values.adults)].map((_, index) => (
-								<div key={`adults-${index}`} className='flex flex-col gap-5 border border-1 borderLite w-8/12 mx-auto p-10 rounded my-5'>
-									<h2 className='text-center text-navy font-medium'>Adult {passenger.adult > 1 ? index + 1 : ''}</h2>
-									<label htmlFor={`adultPassengers.${index}.firstName`} className='font-medium text-navy'>
-										First name
-									</label>
-									<Field id={`adults.${index}.firstName`} name={`adultPassengers.${index}.firstName`} placeholder="Adult's First Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`adultPassengers.${index}.firstName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`adultPassengers.${index}.lastName`} className='font-medium text-navy'>
-										Last name
-									</label>
-									<Field id={`adultPassengers.${index}.lastName`} name={`adultPassengers.${index}.lastName`} placeholder="Adult's Last Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`adultPassengers.${index}.lastName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`adults.${index}.age`} className='font-medium text-navy'>
-										Age
-									</label>
-									<Field id={`adults.${index}.age`} name={`adultPassengers.${index}.age`} placeholder="Adult's Age" type='number' className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`adultPassengers.${index}.age`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`adults.${index}.gender`} className='font-medium text-navy'>
-										Gender
-									</label>
-									<Field id={`adults.${index}.gender`} as='select' name={`adultPassengers.${index}.gender`}>
-										<option value=''>Select gender</option>
-										<option value='male'>Male</option>
-										<option value='female'>Female</option>
-									</Field>
-									<ErrorMessage
-										name={`adultPassengers.${index}.gender`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`adults.${index}.bdate`} className='font-medium text-navy'>
-										Birthdate
-									</label>
-									<Field id={`adult.${index}.bdate`} name={`adultPassengers.${index}.bdate`} placeholder='Birthdate' type='date' />
-									<ErrorMessage
-										name={`adultPassengers.${index}.bdate`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<Field type='hidden' id={`adult.${index}.seat`} name={`adultPassengers.${index}.seat`} />
-									<Field type='hidden' id={`adult.${index}.fare_type`} name={`adultPassengers.${index}.fare_type`} value='adult' />
-									<Field type='hidden' id={`adult.${index}.seatNumber`} name={`adultPassengers.${index}.seatNumber`} />
-									<RenderIf value={(formikProps.values.adultPassengers[index].seatNumber as number) !== 0}>
-										<div className='flex justify-center items-center'>
-											<ImageCircleRound className='w-10 h-10 p-6' label={formikProps.values.adultPassengers[index].seatNumber as number} />
-										</div>
-									</RenderIf>
-									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('adultPassengers', index)}>
-										Choose seat
-									</div>
-
-
-{/* vehicle */}
-									<label htmlFor='addVehicle' className='text-navy font-medium'>
-										Add vehicle (Optional)
-									</label>
-									<hr />
-									<RenderIf value={!passengerVehicle}>
-										<div id='addVehicle' className='flex justify-end'>
-											<CustomButton onClick={() => onPassengerVehicle('add', 'adultPassengers', index, formikProps)} label={<MdPostAdd size={20} />} className='bg-accent text-white py-2 px-5' />
-										</div>
-									</RenderIf>
-
-									<RenderIf value={passengerVehicle}>
-										<div id='removeVehicle' className='flex justify-end'>
-											<CustomButton onClick={() => onPassengerVehicle('remove', 'adultPassengers', index, formikProps)} label={<CgRemoveR size={20} />} className='bg-accent text-white py-2 px-5' />
-										</div>
-									</RenderIf>
-
-									<RenderIf value={passengerVehicle}>
-										{!isEmpty(vehiclesAvailable) && (
-											<Field id={`adults.${index}.vehicle.vehicleChosen`} as='select' name={`adultPassengers.${index}.vehicleChosen.vehicle_id`}>
-												<option value=''>Select vehicle</option>
-												{vehiclesAvailable?.map((vehicle) => (
-													<option value={vehicle.vehicle_id}>
-														{vehicle.vehicletype_name} &nbsp; (₱{vehicle.carrier_fee})
-													</option>
-												))}
-											</Field>
-										)}
-
-										<ErrorMessage
-											name={`adultPassengers.${index}.vehicleChosen.vehicle_id`}
-											render={(msg) => (
-												<div style={{ color: '#f10000' }} className='error'>
-													{msg}
-												</div>
-											)}
-										/>
-										<Field id={`adult.${index}.owner_name`} className='uppercase' name={`adultPassengers.${index}.vehicleChosen.owner_name`} placeholder='Owner Name' type='text' />
-										<ErrorMessage
-											name={`adultPassengers.${index}.vehicleChosen.owner_name`}
-											render={(msg) => (
-												<div style={{ color: '#f10000' }} className='error'>
-													{msg}
-												</div>
-											)}
-										/>
-										<Field id={`adult.${index}.plate_number`} className='uppercase' name={`adultPassengers.${index}.vehicleChosen.plate_number`} placeholder='Plate Number' type='text' />
-										<ErrorMessage
-											name={`adultPassengers.${index}.vehicleChosen.plate_number`}
-											render={(msg) => (
-												<div style={{ color: '#f10000' }} className='error'>
-													{msg}
-												</div>
-											)}
-										/>
-									</RenderIf>
+							{[...Array(formikProps.values.seniorPwd)].map((_, index) => (
+								<div key={`adults-${index}`}>
+									{/* // @ts-ignore */}
+									<PassengerFormDetails identifyAs={`seniorPwdPassenger.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.seniorPwdPassenger[index].seatNumber as number} onSeatChosen={() => onSeat('seniorPwdPassenger', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'seniorPwdPassenger', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'seniorPwdPassenger', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Senior/Pwd'} />
 								</div>
 							))}
-
-							{/* students */}
 
 							{[...Array(formikProps.values.students)].map((_, index) => (
-								<div key={`students-${index}`} className='flex flex-col gap-5 border border-1 borderLite w-8/12 mx-auto p-10 rounded my-5'>
-									<h2 className='text-center text-navy font-medium'>Student {passenger.student > 1 ? index + 1 : ''}</h2>
-									<label htmlFor={`students.${index}.firstName`} className='font-medium text-navy'>
-										First name
-									</label>
-									<Field id={`students.${index}.firstName`} name={`studentPassengers.${index}.firstName`} placeholder="Student's First Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`studentPassengers.${index}.firstName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`students.${index}.lastName`} className='font-medium text-navy'>
-										Last name
-									</label>
-									<Field id={`students.${index}.lastName`} name={`studentPassengers.${index}.lastName`} placeholder="Student's Last Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`studentPassengers.${index}.lastName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`students.${index}.age`} className='font-medium text-navy'>
-										Age
-									</label>
-									<Field id={`students.${index}.age`} name={`studentPassengers.${index}.age`} placeholder="Student's Age" type='number' className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`studentPassengers.${index}.age`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`students.${index}.gender`} className='font-medium text-navy'>
-										Gender
-									</label>
-									<Field as='select' id={`students.${index}.gender`} name={`studentPassengers.${index}.gender`}>
-										<option value=''>Select gender</option>
-										<option value='male'>Male</option>
-										<option value='female'>Female</option>
-									</Field>
-									<ErrorMessage
-										name={`studentPassengers.${index}.gender`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`students.${index}.bdate`} className='font-medium text-navy'>
-										Birthdate
-									</label>
-									<Field id={`students.${index}.bdate`} name={`studentPassengers.${index}.bdate`} placeholder='Birthdate' type='date' />
-									<ErrorMessage
-										name={`studentPassengers.${index}.bdate`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-
-									<Field type='hidden' id={`student.${index}.seat`} name={`studentPassengers.${index}.seat`} />
-									<Field type='hidden' id={`student.${index}.fare_type`} name={`studentPassengers.${index}.fare_type`} value='student' />
-									<Field type='hidden' id={`student.${index}.seatNumber`} name={`studentPassengers.${index}.seatNumber`} />
-
-									<RenderIf value={(formikProps.values.studentPassengers[index].seatNumber as number) !== 0}>
-										<div className='flex justify-center items-center'>
-											<ImageCircleRound className='w-10 h-10' label={formikProps.values.studentPassengers[index].seatNumber as number} />
-										</div>
-									</RenderIf>
-
-									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('studentPassengers', index)}>
-										Choose seat
-									</div>
-								</div>
-							))}
-
-							{[...Array(formikProps.values.minors)].map((_, index) => (
-								<div key={`minor-${index}`} className='flex flex-col gap-5 border border-1 borderLite w-8/12 mx-auto p-10 rounded my-5'>
-									<h2 className='text-center text-navy font-medium'>Minor {passenger.minor > 1 ? index + 1 : ''}</h2>
-									<label htmlFor={`minor.${index}.firstName`} className='font-medium text-navy'>
-										First name
-									</label>
-									<Field id={`minor.${index}.firstName`} name={`minorPassengers.${index}.firstName`} placeholder="Student's First Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`minorPassengers.${index}.firstName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`minor.${index}.lastName`} className='font-medium text-navy'>
-										Last name
-									</label>
-									<Field id={`minor.${index}.lastName`} name={`minorPassengers.${index}.lastName`} placeholder="Student's Last Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`minorPassengers.${index}.lastName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`minor.${index}.age`} className='font-medium text-navy'>
-										Age
-									</label>
-									<Field id={`minor.${index}.age`} name={`minorPassengers.${index}.age`} placeholder="Student's Age" type='number' className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`minorPassengers.${index}.age`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`minor.${index}.gender`} className='font-medium text-navy'>
-										Gender
-									</label>
-									<Field as='select' id={`minor.${index}.gender`} name={`minorPassengers.${index}.gender`}>
-										<option value=''>Select gender</option>
-										<option value='male'>Male</option>
-										<option value='female'>Female</option>
-									</Field>
-									<ErrorMessage
-										name={`minorPassengers.${index}.gender`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`minor.${index}.bdate`} className='font-medium text-navy'>
-										Birthdate
-									</label>
-									<Field id={`minor.${index}.bdate`} name={`minorPassengers.${index}.bdate`} placeholder='Birthdate' type='date' />
-									<ErrorMessage
-										name={`minorPassengers.${index}.bdate`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<Field type='hidden' id={`minor.${index}.seat`} name={`minorPassengers.${index}.seat`} />
-									<Field type='hidden' id={`minor.${index}.fare_type`} name={`minorPassengers.${index}.fare_type`} value='minor' />
-									<Field type='hidden' id={`minor.${index}.seatNumber`} name={`minorPassengers.${index}.seatNumber`} />
-
-									<RenderIf value={(formikProps.values.minorPassengers[index].seatNumber as number) !== 0}>
-										<div className='flex justify-center items-center'>
-											<ImageCircleRound className='w-10 h-10' label={formikProps.values.minorPassengers[index].seatNumber as number} />
-										</div>
-									</RenderIf>
-									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('minorPassengers', index)}>
-										Choose seat
-									</div>
+								<div key={`students-${index}`}>
+									{/* // @ts-ignore */}
+									<PassengerFormDetails identifyAs={`studentPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.studentPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('studentPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'studentPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'studentPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Student'} />
 								</div>
 							))}
 
 							{[...Array(formikProps.values.regulars)].map((_, index) => (
-								<div key={`regulars-${index}`} className='flex flex-col gap-5 border border-1 borderLite w-8/12 mx-auto p-10 rounded my-5'>
-									<h2 className='text-center text-navy font-medium'>Regular {passenger.regular > 1 ? index + 1 : ''}</h2>
-									<label htmlFor={`regulars.${index}.firstName`} className='font-medium text-navy'>
-										First name
-									</label>
-									<Field id={`regulars.${index}.firstName`} name={`regularPassengers.${index}.firstName`} placeholder="Student's First Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`regularPassengers.${index}.firstName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`regulars.${index}.lastName`} className='font-medium text-navy'>
-										Last name
-									</label>
-									<Field id={`regulars.${index}.lastName`} name={`regularPassengers.${index}.lastName`} placeholder="Student's Last Name" className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`regularPassengers.${index}.lastName`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`regulars.${index}.age`} className='font-medium text-navy'>
-										Age
-									</label>
-									<Field id={`regulars.${index}.age`} name={`regularPassengers.${index}.age`} placeholder="Student's Age" type='number' className='borderGray h-[2.5rem] w-full rounded placeholder:pl-2' />
-									<ErrorMessage
-										name={`regularPassengers.${index}.age`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`regulars.${index}.gender`} className='font-medium text-navy'>
-										Gender
-									</label>
-									<Field as='select' id={`regulars.${index}.gender`} name={`regularPassengers.${index}.gender`}>
-										<option value=''>Select gender</option>
-										<option value='male'>Male</option>
-										<option value='female'>Female</option>
-									</Field>
-									<ErrorMessage
-										name={`regularPassengers.${index}.gender`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
-									<label htmlFor={`regulars.${index}.bdate`} className='font-medium text-navy'>
-										Birthdate
-									</label>
-									<Field id={`regulars.${index}.bdate`} name={`regularPassengers.${index}.bdate`} placeholder='Birthdate' type='date' />
-									<ErrorMessage
-										name={`regularPassengers.${index}.bdate`}
-										render={(msg) => (
-											<div style={{ color: '#f10000' }} className='error'>
-												{msg}
-											</div>
-										)}
-									/>
+								<div key={`regulars-${index}`}>
+									{/* // @ts-ignore */}
+									<PassengerFormDetails identifyAs={`regularPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.regularPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('regularPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'regularPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'regularPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Regular'} />
+								</div>
+							))}
 
-									<Field type='hidden' id={`regulars.${index}.seat`} name={`regularPassengers.${index}.seat`} />
-									<Field type='hidden' id={`regulars.${index}.fare_type`} name={`regularPassengers.${index}.fare_type`} value='regular' />
-									<Field type='hidden' id={`regulars.${index}.seatNumber`} name={`regularPassengers.${index}.seatNumber`} />
+							{[...Array(formikProps.values.child)].map((_, index) => (
+								<div key={`child-${index}`}>
+									{/* // @ts-ignore */}
+									<PassengerFormDetails identifyAs={`childPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.childPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('childPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'childPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'childPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Child'} />
+								</div>
+							))}
 
-									<RenderIf value={(formikProps.values.regularPassengers[index].seatNumber as number) !== 0}>
-										<div className='flex justify-center items-center'>
-											<ImageCircleRound className='w-10 h-10' label={formikProps.values.regularPassengers[index].seatNumber as number} />
-										</div>
-									</RenderIf>
-
-									<div className='w-full h-[2.5rem] borderGray text-navy font-[500] text-center py-2 cursor-pointer hover:bg-accent hover:text-white' onClick={() => onSeatReserve('regularPassengers', index)}>
-										Choose seat
-									</div>
+							{[...Array(formikProps.values.infant)].map((_, index) => (
+								<div key={`infant-${index}`}>
+									{/* // @ts-ignore */}
+									<PassengerFormDetails identifyAs={`infantPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.infantPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('infantPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'infantPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'infantPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Infant'} />
 								</div>
 							))}
 
