@@ -31,12 +31,20 @@ const Headers: React.FC = () => {
 						<nav className='hidden md:block'>
 							<ul className='flex justify-between items-center gap-4 px-10 text-lite font-medium text-xl cursor-pointer'>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
-									<a href='/'>HOME</a>
+									<a className='hover:text-white' href='/'>
+										HOME
+									</a>
 								</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
-									<a href='/booking'>BOOK</a>
+									<a className='hover:text-white' href='/booking'>
+										BOOK
+									</a>
 								</li>
-								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>SCHEDULE</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
+									<a className='hover:text-white' href='/user-dasboard'>
+										DASHBOARD
+									</a>
+								</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>ABOUT US</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>CONTACT US</li>
 								<li>

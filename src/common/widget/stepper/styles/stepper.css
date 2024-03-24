@@ -7,11 +7,17 @@
     --dark: #150710;
     --lite: #F1F0E8;
     --default: #ffffff;
+     --grayLite: #eaeaea;
 }
 
 
 
-.line:after{
+.line-color{
+  border:1px solid var(--grayLite)
+}
+
+
+.lineActive:after{
   position: absolute;
   content: "";
   width:18rem;
@@ -21,4 +27,21 @@
   border-radius: 8px;
   margin-left: 0.5rem;
  
+}
+
+.line:after{
+  position: absolute;
+  content: "";
+  width:18rem;
+  height: 0.19rem;
+  margin-top: 0.5rem;
+  background-color: var(--grayLite);
+  border-radius: 8px;
+  margin-left: 0.5rem;
+ 
+}
+
+
+.borderGray{
+  border:1px solid #eaeaea;
 }

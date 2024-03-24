@@ -19,6 +19,8 @@ import { FiMinusCircle } from 'react-icons/fi';
 import { PassengerClass, storePassengerNumber } from '../../../utils/redux/slicer/passengerSlice';
 import waitSec from '../../../utils/setTimeout';
 import PassengerMenuList from './components/dropdown-passenger-list';
+import CustomButton from '../../../common/components/ui/button.componetnt';
+import dateArrival from '../../../utils/dateFormat';
 
 
 interface PassengerType{
@@ -155,26 +157,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 		setBookingModal(!bookingModal);
 	};
 
-	function dateArrival(arrivalSchedule: string): string {
-		const options: Intl.DateTimeFormatOptions = {
-			year: 'numeric',
-			month: 'long',
-			day: 'numeric',
-			hour: 'numeric',
-			minute: 'numeric',
-			second: 'numeric',
-		};
-		// 	timeZone: 'UTC'
-		// timeZoneName: 'short'
-
-		let dateLocale = new Date(arrivalSchedule);
-
-		if (isNaN(dateLocale.getTime())) {
-			return 'Invalid Date';
-		}
-
-		return dateLocale.toLocaleString('en-US', options);
-	}
+	
 
 	return (
 		<>
@@ -211,9 +194,9 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 										<a target='blank' href={`${Immutable.API}/vehicle?photo=${schedule.vehicle.vehicle_id}`}>
 											<img src={`${Immutable.API}/vehicle?photo=${schedule.vehicle.vehicle_id}`} className='max-w-full' />
 										</a>
-										<button className='btn bg-accent text-white text-sm' onClick={() => onBooking(schedule)}>
-											Book now
-										</button>
+										<CustomButton label={'Book Now'} className='btn bg-accent text-white text-sm' onClick={() => onBooking(schedule)} />
+							
+										
 									</div>
 								</div>
 							</>

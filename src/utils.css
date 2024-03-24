@@ -9,3 +9,10 @@ input::-ms-reveal,
 input::-ms-clear {
   display: none;
 }
+
+
+
+body{
+ background: hsla(53, 24.3%, 92.7%,0.4)
+
+}

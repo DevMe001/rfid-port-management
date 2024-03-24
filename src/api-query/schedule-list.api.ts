@@ -14,8 +14,8 @@ export const scheduleService = createApi({
 			providesTags: ['Schedule'],
 			keepUnusedDataFor: 0,
 		}),
-		getBookingScheduleById: builder.query<BookingSchedules[], Record<string, any>>({
-			query: () => `schedule`,
+		getBookingScheduleById: builder.query<BookingSchedules,  string>({
+			query: (scheduleId) => `schedule/${scheduleId}`,
 			providesTags: ['Schedule'],
 			keepUnusedDataFor: 0,
 		}),
@@ -27,4 +27,4 @@ export const scheduleService = createApi({
 	}),
 });
 
-export const { useGetBookingScheduleQuery,useGetBookingVehicleTypeQuery } = scheduleService;
+export const { useGetBookingScheduleQuery,useGetBookingVehicleTypeQuery,useGetBookingScheduleByIdQuery } = scheduleService;

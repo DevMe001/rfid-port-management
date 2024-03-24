@@ -10,7 +10,7 @@ type ButtonProps={
 
 const CustomButton: React.FC<ButtonProps> = ({ label,className,...props}) => {
 	return (
-		<button className={clsx('btn bg-accent text-white outline-none border-none',className)} type='submit' {...props}>
+		<button className={clsx('btn bg-accent text-white outline-none border-none focus:outline-none',className)} type='submit' {...props}>
 			{label}
 		</button>
 	);
