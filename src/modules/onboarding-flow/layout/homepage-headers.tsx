@@ -41,7 +41,7 @@ const Headers: React.FC = () => {
 									</a>
 								</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
-									<a className='hover:text-white' href='/user-dasboard'>
+									<a className='hover:text-white' href='/user-dashboard'>
 										DASHBOARD
 									</a>
 								</li>

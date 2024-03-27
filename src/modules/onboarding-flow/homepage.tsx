@@ -54,7 +54,7 @@ const HomePage = () => {
 				}),
 			);
 
-			  navigate('/user-dasboard');
+			  navigate('/user-dashboard');
 			} else {
 			  enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
 			}

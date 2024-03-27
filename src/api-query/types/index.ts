@@ -1,3 +1,5 @@
+import { IUser } from "../../utils/redux/slicer/authSlice";
+
 type BookingSchedules = {
 	schedule_id?: string;
 	origin: string;
@@ -19,10 +21,39 @@ type Vehicle = {
 
 
  type VehicleType={
-	vehicle_id:string;
+	vehicletype_id:string;
 	vehicletype_name:string;
 	carrier_fee:number;
 }
 
 
-export type { BookingSchedules, VehicleType };
+interface PersonalInformation {
+	personal_id?: string;
+	firstname: string;
+	midlename: string;
+	lastname: string;
+	age: number;
+	birthdate: string;
+	gender: string;
+	nationality: string;
+	address: string;
+	mobileNumber: string;
+	account_id: string;
+
+}
+
+interface UploadFile {
+	user_id: IUser['id'];
+	profile_photo: File;
+}
+
+interface Account {
+	account_id?: string;
+	user_id: string;
+	displayName: string;
+	email: string;
+	photo: string;
+}
+
+
+export type { BookingSchedules, VehicleType, PersonalInformation, UploadFile, Account };

@@ -1,12 +1,13 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit"
 import { formSchema } from "../../../modules/buyers/addbooking/bookingById"
+import passengerSlice from "./passengerSlice";
 
 
 
 interface Passenger {
 	firstName: string;
 	lastName: string;
-	age: string;
+	age: number;
 	gender: string;
 	bdate?: string;
 	seat: string;
@@ -26,15 +27,18 @@ interface VehiclePassenger {
 
 
 type PassegerForms = {
- 	seniorPwdPassenger:  Partial<Passenger[]>
-	studentPassengers:  Partial<Passenger[]>
-	childPassengers:  Partial<Passenger[]>
-	regularPassengers: Partial<Passenger[]>
-	infantPassengers: Partial<Passenger[]>
+   isSubmitted:boolean,
+    seniorPwdPassenger: Passenger[];
+    studentPassengers: Passenger[];
+    childPassengers: Passenger[];
+    regularPassengers: Passenger[];
+    infantPassengers: Passenger[];
 }
 
 
+
 const initialState: PassegerForms = {
+  isSubmitted:false,
   seniorPwdPassenger: [],
   studentPassengers: [],
   childPassengers: [],
@@ -44,16 +48,18 @@ const initialState: PassegerForms = {
 
 
 
-const pssengerFormSlicer = createSlice({
+const passengerFormSlice = createSlice({
   name:'pasengerr-form',
   initialState,
   reducers:{
     storePassengerForm : (_state,action:PayloadAction<PassegerForms>) =>{
-     return action.payload;
+        return action.payload;
     }
   }
 });
 
 
+export const { storePassengerForm } = passengerFormSlice.actions;
 
-export default pssengerFormSlicer.reducer;
+
+export default passengerFormSlice.reducer;

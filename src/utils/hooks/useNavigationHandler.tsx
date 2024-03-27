@@ -31,6 +31,8 @@ const useNavigationHandler = () => {
         enqueueSnackbar('Logout successfully', { variant: 'success', autoHideDuration: 5000 });
         await waitSec(3000);
         dispatch(revertUser());
+        localStorage.removeItem('persist:port-management');
+        
         navigate('/');
     }
 

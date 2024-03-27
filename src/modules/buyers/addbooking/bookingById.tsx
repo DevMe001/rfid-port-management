@@ -1,12 +1,12 @@
-import  React,{ useEffect, useState } from 'react';
+import  React,{ useCallback, useEffect, useState } from 'react';
 import RenderIf from '../../../common/components/ui/render-if';
 import Stepper from '../../../common/widget/stepper';
 import { onActiveMode, onToggleBookingModal, onToggleNavHomepageMobile, useSeatTaken } from '../../../utils/hooks/globa.state';
 import { Formik, Field, Form, ErrorMessage, FormikProps } from 'formik';
-import { useAppSelector } from '../../../utils/redux/store';
+import { RootState, useAppDispatch, useAppSelector } from '../../../utils/redux/store';
 
 import * as Yup from 'yup';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNull } from 'lodash';
 
 import '../styles/book-list.css'
 import PopupModal from '../../../common/widget/modal/popup.,modal';
@@ -21,22 +21,27 @@ import CustomButton from '../../../common/components/ui/button.componetnt';
 import PassengerFormDetails from './components/passenger-form.component';
 import { GiCargoShip } from 'react-icons/gi';
 import Immutable from '../../../immutable/constant';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGetBookingScheduleByIdQuery } from '../../../api-query/schedule-list.api';
 import dateArrival from '../../../utils/dateFormat';
 import { enqueueSnackbar } from 'notistack';
+import { storePassengerForm } from '../../../utils/redux/slicer/passengerformSlice';
+import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
+import displayFullName from '../../../utils';
+
+import { BiRfid } from 'react-icons/bi';
 
 interface Passenger {
 	firstName: string;
 	lastName: string;
-	age: string;
+	age: number;
 	gender: string;
 	bdate?: string;
 	seat: string;
 	seatNumber: number;
 	fare_type: string;
 	vehicleChosen?: VehiclePassenger;
-	rangePrice?:number;
+	rangePrice?: number;
 }
 
 interface VehiclePassenger {
@@ -51,7 +56,7 @@ interface VehiclePassenger {
 const passengerSchema = Yup.object().shape({
 	firstName: Yup.string().required('First name is required'),
 	lastName: Yup.string().required('Last name is required'),
-	age: Yup.string(),
+	age: Yup.number(),
 	gender: Yup.string().required('Gender is required'),
 	bdate: Yup.string(),
 	seat: Yup.string(),
@@ -91,14 +96,40 @@ const BookingById:React.FC = () => {
 	const [seatSelectedNumber, setSelectedSeatNumber] = useState<string>('');
 	const [getDisplayPassenger,setDisplayValue] = useState<any>({});
 	const [passengerVehicle,setPassengerVehicle] = useState<boolean>(false);
-	const [tabValue,setCurrentTab] = useState<number>(0);
+
+
+
 	const params = useParams();
 
 
 		
 	const { data: scheduledSelected } = useGetBookingScheduleByIdQuery(params.bookId as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
+	
+
+		const user = useAppSelector((state: RootState) => state.authUser);
+
+		const passengerFormList = useAppSelector((state: RootState) => state.passengerFormDetails);
+
+	const { data: userProfileDetails } = useGetPersonalDetailsByIdQuery(user.id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
 	const getParamsSchedule = !isEmpty(scheduledSelected) ? scheduledSelected : undefined;
+
+	const [payModal, setPayModal] = onToggleBookingModal();
+
+	// const navigate = useNavigate();
+
+		const showBookDisplay = passengerFormList.isSubmitted ? 1 : 0;
+
+
+		const [{ isActive }, setActive] = onActiveMode();
+
+
+
+		console.log(showBookDisplay,'get form details');
+
+		const [tabValue, setCurrentTab] = useState<number>(0);
+
+	const dispatch = useAppDispatch();
 
 		const [getSeat, reserveSeat] = onToggleBookingModal();
 
@@ -326,7 +357,7 @@ const onSeat = (type:string,index:number)=>{
 	onSeatReserve(type, index);
 }
 
-function passegerList(){
+function passegerList() {
 	let passengerType = '';
 
 	if (passenger.senior > 0) {
@@ -346,20 +377,161 @@ function passegerList(){
 		passengerType += 'Infant';
 	}
 
-	let listPassenger = passengerType.split(' ');
+	let listPassenger = passengerType.trim().split(' ');
 
-	if(listPassenger.length > 1){
-			listPassenger.join(' , ');
-	}else{
-			listPassenger.join(' ');
+	if (listPassenger.length > 1) {
+		passengerType = listPassenger.join(', ');
 	}
 
-	return listPassenger;
+	return passengerType;
+}
+
+
+interface VehicleRecord {
+	vehicleChosen: string;
+	vehicleName: string;
+	carrierFee: string;
+	owner: string;
+	plate_number: string;
+	passengerType: string;
+}
+
+function calculatePassengersVehicle() {
+	const vehicles: VehicleRecord[] = [];
+
+	function pushUniqueRecord(vehicleChosen: string, vehicleName: string, carrierFee: string, owner: string, plate_number: string, passengerType: string): void {
+		const record: VehicleRecord = {
+			vehicleChosen,
+			vehicleName,
+			carrierFee,
+			owner,
+			plate_number,
+			passengerType,
+		};
+
+		const exists = vehicles.some((v) => JSON.stringify(v) === JSON.stringify(record));
+
+		if (!exists) {
+			vehicles.push(record);
+		}
+	}
+
+	const { seniorPwdPassenger, regularPassengers, studentPassengers } = passengerFormList;
+
+	if (seniorPwdPassenger && seniorPwdPassenger.length > 0) {
+		seniorPwdPassenger.forEach((item) => {
+			if (item.vehicleChosen) {
+				const vehicleSplit = item.vehicleChosen.vehicle_id.split(',');
+
+				pushUniqueRecord(vehicleSplit[0], vehicleSplit[1], vehicleSplit[2], item.vehicleChosen.owner_name, item.vehicleChosen.plate_number, 'senior/pwd');
+			}
+		});
+	}
+
+	if (regularPassengers && regularPassengers.length > 0) {
+		regularPassengers.forEach((item) => {
+			if (item.vehicleChosen) {
+				const vehicleSplit = item.vehicleChosen.vehicle_id.split(',');
+		
+				pushUniqueRecord(vehicleSplit[0], vehicleSplit[1], vehicleSplit[2], item.vehicleChosen.owner_name, item.vehicleChosen.plate_number, 'regular');
+			}
+		});
+	}
+
+	if (studentPassengers && studentPassengers.length > 0) {
+		studentPassengers.forEach((item) => {
+			if (item.vehicleChosen) {
+				const vehicleSplit = item.vehicleChosen.vehicle_id.split(',');
+				
+				pushUniqueRecord(vehicleSplit[0], vehicleSplit[1], vehicleSplit[2], item.vehicleChosen.owner_name, item.vehicleChosen.plate_number, 'student');
+			}
+		});
+	}
+
+	let vehicleList = '';
+
+	vehicles.map((item) =>{
+
+		if(!isEmpty(item.vehicleName)){
+				vehicleList += ` ${item.vehicleName} x  (₱ ${item.carrierFee}) `;
+		}
+			
+
+	})
+
+let totalVehicles = vehicles.reduce((acc, cur) => acc + Number(cur.carrierFee), 0);
+
+
+
+	return [vehicleList, totalVehicles];
+}
+
+
+function calculatePassengers(){
+		let type = passenger.passengerClass;
+		let senior = 0,student=0,child=0,regular=0,infant=0;
+		let countSenior = passenger.senior;
+		let countStudent = passenger.student;
+		let countRegular = passenger.regular;
+		let countChild = passenger.child;
+		let countInfant = passenger.infant;
+		let terminalFee = 10;
+		let serviceFee = 10;
+
+
+		if(type === 'economy'){
+				senior = 757 * countSenior;
+				student = 848 * countStudent;
+				regular = 1060 * countRegular;
+				child = 530 * countChild;
+				infant = 60 * countInfant;
+
+		}
+		if(type === 'tourist'){
+				senior = 757 * countSenior;
+				student = 848 * countStudent;
+				regular = 1060 * countRegular;
+				child = 530 * countChild;
+				infant = 60 * countInfant;
+		}
+
+		let displayFareRate = '';
+
+
+		let passengerTotalList = [
+			{ label: 'senior /pwd ', count: countSenior, total: senior + terminalFee * serviceFee },
+			{ label: ' student ', count: countStudent, total: student },
+			{ label: ' regular', count: countRegular, total: regular + terminalFee * serviceFee },
+			{ label: ' child', count: countChild, total: child },
+			{ label: ' infant', count: countInfant, total: infant },
+		];
+
+		passengerTotalList.map((list) =>{
+			if(list.count !== 0){
+				displayFareRate += `${list.label} (${list.count} x ₱ ${list.total})`;
+			}
+		})
+
+	let totalPassengerAmount =	passengerTotalList.reduce((acc,cur) => acc + cur.total , 0);
+
+
+	return [displayFareRate, totalPassengerAmount];
 
 }
 
+// payment process
+const onPaymentProcess = useCallback(() => {
+		window.scrollTo({
+			top: 0,
+			behavior: 'smooth',
+		});
+		document.body.style.overflow = 'hidden';
+	setPayModal(!payModal);
+}, [payModal]);
+
+
 // onActiveIndicatorMode
-const [{isActive}, setActive] = onActiveMode();
+
 
 useEffect(() => {
 	return setActive({ isActive: true });
@@ -384,7 +556,7 @@ useEffect(() => {
 								age: 0,
 								gender: '',
 								fare_type: 'senior',
-								seat: 0,
+								seat: '',
 								seatNumber: 0,
 								rangePrice: 757,
 							})),
@@ -394,7 +566,7 @@ useEffect(() => {
 								age: 0,
 								gender: '',
 								fare_type: 'student',
-								seat: 0,
+								seat: '',
 								seatNumber: 0,
 								rangePrice: 848,
 							})),
@@ -404,7 +576,7 @@ useEffect(() => {
 								age: 0,
 								gender: '',
 								fare_type: 'child',
-								seat: 0,
+								seat: '',
 								seatNumber: 0,
 								rangePrice: 530,
 							})),
@@ -414,7 +586,7 @@ useEffect(() => {
 								age: 0,
 								gender: '',
 								fare_type: 'regular',
-								seat: 0,
+								seat: '',
 								seatNumber: 0,
 								rangePrice: 1060,
 							})),
@@ -425,7 +597,7 @@ useEffect(() => {
 								age: 0,
 								gender: '',
 								fare_type: 'infant',
-								seat: 0,
+								seat: '',
 								seatNumber: 0,
 								rangePrice: 60,
 							})),
@@ -434,6 +606,18 @@ useEffect(() => {
 						onSubmit={(values, { setSubmitting }) => {
 							// Handle form submission
 							console.log(values);
+
+							const payload = {
+								isSubmitted:true,
+								seniorPwdPassenger: values.seniorPwdPassenger,
+								studentPassengers: values.studentPassengers,
+								regularPassengers: values.regularPassengers,
+								childPassengers: values.childPassengers,
+								infantPassengers: values.infantPassengers,
+							};
+
+							dispatch(storePassengerForm(payload));
+
 							setDisplayValue(values);
 							// Add your submission logic here
 							setSubmitting(false); // Ensure to reset form submission status
@@ -540,9 +724,10 @@ useEffect(() => {
 						</div>
 					</div>
 					<div className='flex flex-col gap-5  w-9/12 mx-auto rounded shadow-md p-10 my-12 borderGeray'>
+						
 						<div className='flex items-evenly items-center flex-col gap-1'>
-							<a target='blank' href={`${Immutable.API}/vehicle?photo=${getParamsSchedule?.vehicle.vehicle_id}`}>
-								<img src={`${Immutable.API}/vehicle?photo=${getParamsSchedule?.vehicle.vehicle_id}`} className='object-contain rounded' width={80} height={100} />
+							<a target='blank' href={`${Immutable.API}/vehicle?photo=${getParamsSchedule?.vehicle.vehicle_id as string}`}>
+								<img src={`${Immutable.API}/vehicle?photo=${getParamsSchedule?.vehicle.vehicle_id as string}`} className='object-contain rounded' width={80} height={100} />
 							</a>
 							<div className='flex'>
 								<label htmlFor='pasengerNumber' className='font-medium'>
@@ -559,13 +744,13 @@ useEffect(() => {
 								<label htmlFor='pasengerNumber' className='font-medium'>
 									Passenger Assigned:
 								</label>
-								<p className='font-normal'>(Dev Me)</p>
+								<p className='font-normal'>({displayFullName(userProfileDetails?.firstname, userProfileDetails?.midlename, userProfileDetails?.lastname)})</p>
 							</div>
 							<div className='flex gap-1'>
 								<label htmlFor='pasengerNumber' className='font-medium'>
 									Email Assigned:
 								</label>
-								<p className='font-normal'>(Dev Me)</p>
+								<p className='font-normal'>({user?.email})</p>
 							</div>
 						</div>
 						<div className='flex justify-between items-baseline gap-2'>
@@ -573,16 +758,15 @@ useEffect(() => {
 								<label htmlFor='pasengerNumber' className='font-medium'>
 									Contact Number:
 								</label>
-								<p className='font-normal'>(Dev Me)</p>
+								<p className='font-normal'>({userProfileDetails?.mobileNumber})</p>
 							</div>
 							<div className='flex gap-1'>
 								<label htmlFor='pasengerNumber' className='font-medium'>
 									Address
 								</label>
-								<p className='font-normal'>(Dev Me)</p>
+								<p className='font-normal'>({userProfileDetails?.address})</p>
 							</div>
 						</div>
-
 						<div className='flex justify-between items-baseline gap-2'>
 							<div className='flex gap-1'>
 								<label htmlFor='pasengerNumber' className='font-medium'>
@@ -598,22 +782,86 @@ useEffect(() => {
 							</div>
 						</div>
 						<hr />
-						<div className='flex  border-b'>
+						<div className='flex gap-5 '>
 							<label htmlFor='total' className='font-medium'>
 								<p>
 									Passenger fare rate: <span className='capitalize'>{passenger.passengerClass}</span>{' '}
 								</p>
-								<span></span>
-								<span></span>
 							</label>
-							<p className='font-normal'>&nbsp; P 1,500</p>
+							<span className='capitalize font-medium'>{calculatePassengers()[0]}</span>
 						</div>
 						<div className='flex justify-end'>
 							<label htmlFor='total' className='font-medium'>
+								Passenger Amount
+							</label>
+							<p className='font-normal'>
+								{' '}
+								&nbsp; &#8369; <span className='font-medium'>{Number(calculatePassengers()[1]).toFixed(2)}</span>
+							</p>
+						</div>
+
+						<RenderIf value={Number(calculatePassengersVehicle()[1]) > 0}>
+							<div className='flex gap-5  border-b py-4'>
+								<label htmlFor='total' className='font-medium'>
+									<p>Vehicle Chosen:</p>
+								</label>
+								<span className='capitalize font-medium'>{calculatePassengersVehicle()[0]}</span>
+							</div>
+							<div className='flex justify-end '>
+								<label htmlFor='total' className='font-medium'>
+									Vehicle Amount
+								</label>
+								<p className='font-normal'>
+									{' '}
+									&nbsp; &#8369; <span className='font-medium'>{Number(calculatePassengersVehicle()[1]).toFixed(2)}</span>
+								</p>
+							</div>
+						</RenderIf>
+						<div className='flex justify-end '>
+							<label htmlFor='total' className='font-medium'>
 								Total
 							</label>
-							<p className='font-normal'>&nbsp; P 1,500</p>
+							<p className='font-normal'>
+								{' '}
+								&nbsp; &#8369; <span className='font-medium'>{Number(Number(calculatePassengers()[1]) + Number(calculatePassengersVehicle()[1])).toFixed(2)}</span>
+							</p>
 						</div>
+						<div className='flex justify-end mt-4'>
+							<CustomButton className='w-2/12' label='Place order' onClick={onPaymentProcess} />
+						</div>
+						<RenderIf value={payModal}>
+							<PopupModal>
+								<div className='text-center'>
+									<p className='font-semibold text-2xl my-4'>Payment options</p>
+								</div>
+								<div className='flex justify-center gap-5 flex-wrap w-[30rem] h-[10rem] mt-8 relative z-10'>
+									<div>
+										<div className=' flex items-baseline gap-2 shadow-md p-10 bg-indigo-500 text-white rounded cursor-pointer'>
+											<label htmlFor='reload' className='font-medium'>
+												Buy RFID
+											</label>
+											<i id='reload'>
+												{' '}
+												<BiRfid />
+											</i>
+										</div>
+									</div>
+									<div>
+										<div className=' flex items-baseline gap-2 shadow-md p-10 bg-accent text-white rounded cursor-pointer'>
+											<label htmlFor='buy' className='font-medium'>
+												Use RFID
+											</label>
+											<i id='buy'>
+												{' '}
+												<BiRfid />
+											</i>
+										</div>
+									</div>
+								</div>
+								<div style={{ clipPath: 'ellipse(40% 40% at 24% 21%)' }} className='absolute  left-0 top-0 right-0 bottom-0 w-[15rem] h-[15rem] bg-accent z-999'></div>
+								<div style={{ position: 'absolute', bottom: '0px', right: '0', zIndex: '0', clipPath: 'ellipse(41% 42% at 82% 87%)' }} className='w-[15rem] h-[15rem] bg-indigo-500'></div>
+							</PopupModal>
+						</RenderIf>
 					</div>
 				</main>
 			</RenderIf>

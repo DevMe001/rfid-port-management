@@ -27,7 +27,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ passengerType,indexLabel,
 	
 	const { data: vehiclesAvailable } = useGetBookingVehicleTypeQuery({}, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
 
-
+console.log(vehiclesAvailable);
 
 	return (
 		<div className='flex flex-col gap-5 border border-1 borderGray w-8/12 mx-auto p-10 rounded my-5 shadow-md' {...divProps}>
@@ -38,7 +38,7 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ passengerType,indexLabel,
 			<InputFieldForm labelName='First Name' identifyAs={identifyAs} fieldName='firstName' placeholder={`First Name`} />
 			<InputFieldForm labelName='Last Name' identifyAs={identifyAs} fieldName='lastName' placeholder={`Last Name`} />
 			<InputFieldForm labelName='Age' identifyAs={identifyAs} fieldName='age' placeholder={`Age`} type='number' />
-			<InputFieldForm inputAssign='select' labelName="Adult's Gender" identifyAs={identifyAs} fieldName='gender' placeholder={`Gender`} type='number'>
+			<InputFieldForm inputAssign='select' labelName='Gender' identifyAs={identifyAs} fieldName='gender' placeholder={`Gender`} type='number'>
 				<option value=''>Select gender</option>
 				<option value='male'>Male</option>
 				<option value='female'>Female</option>
@@ -52,11 +52,13 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ passengerType,indexLabel,
 			<RenderSeat seatNumber={seatNumber as number} onSeatReserve={onSeatChosen} />
 
 			{/* vehicle */}
-			<label htmlFor='addVehicle' className='text-navy font-medium'>
-				Add vehicle (Optional)
-			</label>
-			<hr />
-			<RenderIf value={!vehicleCondition as boolean}>
+			<RenderIf value={passengerType != 'Child' && passengerType != 'Infant'}>
+				<label htmlFor='addVehicle' className='text-navy font-medium'>
+					Add vehicle (Optional)
+				</label>
+				<hr />
+			</RenderIf>
+			<RenderIf value={(!vehicleCondition as boolean) && passengerType != 'Child' && passengerType != 'Infant'}>
 				<div id='addVehicle' className='flex justify-end'>
 					<CustomButton onClick={onPassengerVehicleAdd} label={<MdPostAdd size={20} />} className='bg-accent text-white py-2 px-5' />
 				</div>
@@ -68,12 +70,12 @@ const PassengerForm: React.FC<PassengerFormProps> = ({ passengerType,indexLabel,
 				</div>
 			</RenderIf>
 
-			<RenderIf value={vehicleCondition as boolean}>
+			<RenderIf value={(vehicleCondition as boolean) && passengerType != 'Child' && passengerType != 'Infant'}>
 				{!isEmpty(vehiclesAvailable) && (
 					<InputFieldForm labelName='Vehicle Available' inputAssign='select' identifyAs={identifyAs} fieldName='vehicleChosen.vehicle_id'>
 						<option value=''>Select vehicle</option>
 						{vehiclesAvailable?.map((vehicle) => (
-							<option key={vehicle.vehicle_id} value={vehicle.vehicle_id}>
+							<option key={vehicle.vehicletype_id} value={`${vehicle.vehicletype_id},${vehicle.vehicletype_name},${vehicle.carrier_fee}`}>
 								{vehicle.vehicletype_name} &nbsp; (₱{vehicle.carrier_fee})
 							</option>
 						))}

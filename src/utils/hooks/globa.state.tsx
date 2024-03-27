@@ -10,3 +10,7 @@ export const onActiveMode = createGlobalState<{isActive:boolean,index?:number}>(
 
 
 export const useSeatTaken = createGlobalState<boolean>(false);
+
+export const useSelectIndex = createGlobalState<number>(0);
+
+export const onToggleAuthBox = createGlobalState<boolean>(false);

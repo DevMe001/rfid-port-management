@@ -4,7 +4,7 @@ import clsx from 'clsx';
 
 
 type ModalProps ={
-	children:React.ReactNode
+	children:React.ReactNode,
 }
 
 const PopupModal:React.FC<ModalProps> = ({children}) => {
@@ -42,7 +42,7 @@ const PopupModal:React.FC<ModalProps> = ({children}) => {
 				{/*  iwant this not hied when someone clicn in this part of box */}
 				<div
 					onClick={handleContentClick}
-					className={clsx('bg-white w-auto h-2/2 rounded-md animate-fade')}
+					className={clsx('bg-white w-auto h-2/2 rounded-md animate-fade relative')}
 				>
 					<p className='flex w-auto justify-end items-center font-bold text-navy pr-5 pt-5 text-3xl'>
 						<span onClick={onOpen}>&times;</span>

@@ -43,7 +43,7 @@ const Router = createBrowserRouter([
 				element: <BuyerBookingwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />,
 			},
 			{
-				path: '/user-dasboard',
+				path: '/user-dashboard',
 				element: (
 					<PrivateRoute>
 						<BuyerDashboardwithSnachbard anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />

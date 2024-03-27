@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import RenderIf from '../../components/ui/render-if';
 import clsx from 'clsx';
 import { RootState, useAppSelector } from '../../../utils/redux/store';
-import { isEmpty } from 'lodash';
+import { isEmpty, isUndefined } from 'lodash';
 import useToggleAuth from '../../../utils/hooks/useToggleAuth';
+import useNavigationHandler from '../../../utils/hooks/useNavigationHandler';
+import { useNavigate } from 'react-router-dom';
+import { useGetProfileAccountQuery } from '../../../api-query/account-api';
+import Immutable from '../../../immutable/constant';
 
 
 type ModalProps = {
@@ -13,7 +17,8 @@ type ModalProps = {
 };
 
 const AuthModal: React.FC<ModalProps> = ({ label, children, onOpen }) => {
-	const { modal,modalRef } = useToggleAuth();
+	const { modal,modalRef,boxAuth,onBoxDisplay } = useToggleAuth();
+ const [onHandlerNavigationEvent] = useNavigationHandler();
 
 	//   const [modal, setModal] = onToggleModal();
 
@@ -41,12 +46,67 @@ const AuthModal: React.FC<ModalProps> = ({ label, children, onOpen }) => {
 		event.stopPropagation(); // Stop event propagation to prevent modal closure
 	};
 
+const navigate = useNavigate();
+
+	
+	const onRoutePath = useCallback((route: string) => {
+		if (route == 'signout') {
+			onHandlerNavigationEvent('signout');
+		}else{
+			navigate('/user-dashboard');
+		}
+	}, []);
+  
+
+
 	const users = useAppSelector((state: RootState) => state.authUser);
 
+		
+
+	const { data: userProfile } = useGetProfileAccountQuery(users.id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+
+	const getProfileUser = !isEmpty(userProfile) ? userProfile : null;
+
 	return (
-		<>
+		<div onMouseLeave={onBoxDisplay}>
 			<RenderIf value={!isEmpty(users.displayName)}>
-				<div className='uppercase bg-accent rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center'>{users.displayName.slice(0, 1)}</div>
+				<div className='relative'>
+					<RenderIf value={!isEmpty(getProfileUser?.photo as unknown as string) && !isUndefined(getProfileUser)}>
+						<div className='uppercase bg-white rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center shadow-md ' onClick={onBoxDisplay}>
+							<img className='object-cover' src={`${Immutable.API}/account/photo/${getProfileUser?.user_id}`} alt={getProfileUser?.photo} />
+						</div>
+					</RenderIf>
+					<RenderIf value={isEmpty(getProfileUser?.photo as unknown as string) || isUndefined(getProfileUser)}>
+						<div className='uppercase bg-accent rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center' onClick={onBoxDisplay}>
+							{users.displayName.slice(0, 1)}
+						</div>
+					</RenderIf>
+					<RenderIf value={boxAuth}>
+						<div className='absolute bg-white top-6 -left-24 right-0 bottom-0  w-[10rem] translate-x-6 translate-y-6 h-[10rem] shadow-md rounded'>
+							<h5 className='text-xs text-navy my-3 text-center font-medium'>{users.email}</h5>
+							<div className='flex justify-center'>
+								<RenderIf value={!isEmpty(getProfileUser?.photo as unknown as string) && !isUndefined(getProfileUser)}>
+									<div className='uppercase bg-white rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center shadow-md ' onClick={() => onRoutePath('profile')}>
+										<img className='object-cover' src={`${Immutable.API}/account/photo/${getProfileUser?.user_id}`} alt={getProfileUser?.photo} />
+									</div>
+								</RenderIf>
+								<RenderIf value={isEmpty(getProfileUser?.photo as unknown as string) || isUndefined(getProfileUser)}>
+									<div className='uppercase bg-accent rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center' onClick={() => onRoutePath('profile')}>
+										{users.displayName.slice(0, 1)}
+									</div>
+								</RenderIf>
+							</div>
+							<div className='flex justify-center gap-4 my-5'>
+								<span className='text-accent text-sm font-medium' onClick={() => onRoutePath('profile')}>
+									Profile
+								</span>
+								<span className='text-navy text-sm font-medium' onClick={() => onRoutePath('signout')}>
+									Logout
+								</span>
+							</div>
+						</div>
+					</RenderIf>
+				</div>
 			</RenderIf>
 			<RenderIf value={isEmpty(users.displayName)}>
 				<span className='uppercase hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md' onClick={onOpen}>
@@ -72,7 +132,7 @@ const AuthModal: React.FC<ModalProps> = ({ label, children, onOpen }) => {
 					</div>
 				</div>
 			</RenderIf>
-		</>
+		</div>
 	);
 };
 

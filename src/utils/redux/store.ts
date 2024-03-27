@@ -10,6 +10,9 @@ import { authService } from '../../api-query/auth-api';
 import authReducers from './slicer/authSlice';
 import { scheduleService } from '../../api-query/schedule-list.api';
 import passengerReducers from './slicer/passengerSlice';
+import passengerformSlice from './slicer/passengerformSlice';
+import { personalInformationService } from '../../api-query/personal-details.api';
+import { accountProfileServices } from '../../api-query/account-api';
 
 
 // creates reducers
@@ -19,6 +22,9 @@ const rootReducers = combineReducers({
 	authUser: authReducers,
 	[scheduleService.reducerPath]: scheduleService.reducer,
 	countPassenger: passengerReducers,
+	passengerFormDetails: passengerformSlice,
+	[personalInformationService.reducerPath]: personalInformationService.reducer,
+    [accountProfileServices.reducerPath]:accountProfileServices.reducer
 });
 // create persistor key
 const peristorConfig = {
@@ -47,6 +53,8 @@ const store = configureStore({
         // define midleware
         authService.middleware,
         scheduleService.middleware,
+        personalInformationService.middleware,
+        accountProfileServices.middleware,
         logger
     ),
     devTools:process.env.NODE_ENV != 'production'

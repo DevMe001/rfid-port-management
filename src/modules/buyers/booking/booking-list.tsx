@@ -3,24 +3,23 @@ import { useGetBookingScheduleQuery } from '../../../api-query/schedule-list.api
 import { enqueueSnackbar } from 'notistack';
 import { useNavigate } from 'react-router-dom';
 import RenderIf from '../../../common/components/ui/render-if';
-import { isEmpty, isUndefined } from 'lodash';
+import { isEmpty, isNull, isUndefined } from 'lodash';
 import { BookingSchedules } from '../../../api-query/types';
 import Immutable from '../../../immutable/constant';
 import '../styles/book-list.css';
 import { GiCargoShip } from "react-icons/gi";
 import useToggleAuth from '../../../utils/hooks/useToggleAuth';
-import { useAppDispatch, useAppSelector } from '../../../utils/redux/store';
-import { onToggleBookingModal } from '../../../utils/hooks/globa.state';
+import { RootState, useAppDispatch, useAppSelector } from '../../../utils/redux/store';
+import { onToggleBookingModal, useSelectIndex } from '../../../utils/hooks/globa.state';
 import PopupModal from '../../../common/widget/modal/popup.,modal';
 
 import { PiUsersThreeFill } from 'react-icons/pi';
-import { IoAddCircleOutline } from 'react-icons/io5';
-import { FiMinusCircle } from 'react-icons/fi';
 import { PassengerClass, storePassengerNumber } from '../../../utils/redux/slicer/passengerSlice';
 import waitSec from '../../../utils/setTimeout';
 import PassengerMenuList from './components/dropdown-passenger-list';
 import CustomButton from '../../../common/components/ui/button.componetnt';
 import dateArrival from '../../../utils/dateFormat';
+import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 
 
 interface PassengerType{
@@ -46,8 +45,13 @@ interface FareClass {
 
 const BookingRecentList: React.FC = () => {
 	// const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+	const authUser = useAppSelector((state:RootState) => state.authUser);
 
+
+	
 	const { data, isError } = useGetBookingScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+	const { data: getPersonalByInformation, isError:isPersonalInformationError } = useGetPersonalDetailsByIdQuery(authUser.id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+
 	const navigate = useNavigate();
 	const { onOpen } = useToggleAuth();
 	const user = useAppSelector((state) => state.authUser);
@@ -55,6 +59,7 @@ const BookingRecentList: React.FC = () => {
 	const [selected, setSelected] = useState<BookingSchedules | Record<string, any>>({});
 	const [dropdown, setDropdown] = useState<boolean>(false);
 	const [{ senior, regular, student, child, infant }, setCounters] = useState<PassengerType>(initialPassengerClass);
+	const [,setSelectedIndex] = useSelectIndex();
 
 	const [{ isActiveError, fare_type }, setFareClass] = useState<FareClass>({
 		isActiveError: false,
@@ -62,7 +67,7 @@ const BookingRecentList: React.FC = () => {
 	});
 
 	useEffect(() => {
-		if (isError) {
+		if (isError || isPersonalInformationError) {
 			enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
 			navigate('/');
 		}
@@ -77,8 +82,12 @@ const BookingRecentList: React.FC = () => {
 
 		setSelected(schedule);
 
-		if (isEmpty(user.accessToken)) onOpen;
-		else setBookingModal(!bookingModal);
+		if (isEmpty(user.accessToken)){
+			 onOpen();
+		}
+		else {
+			setBookingModal(!bookingModal)
+		}
 	};
 
 	const onBoxShow = () => {
@@ -142,19 +151,40 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 	const dispatch = useAppDispatch();
 
 	const onRouteBookingById = async(id: string) => {
-		if (totalPassenger > 0) navigate(`/booking/${id}`);
 
-		if(isEmpty(fare_type)){
+		try {
+			console.log(getPersonalByInformation);
+			if (!isNull(getPersonalByInformation)){
+					if (totalPassenger > 0) navigate(`/booking/${id}`);
+
+					if (isEmpty(fare_type)) {
+						setFareClass({ isActiveError: true });
+						await waitSec(1000);
+						setFareClass({ isActiveError: false });
+					}
+
+				dispatch(storePassengerNumber({ totalCount: totalPassenger, senior: senior, student: student, regular: regular, child: child, infant: infant, passengerClass: fare_type }));
+			} else{
+
+				enqueueSnackbar('Complete information first', { variant: 'warning', autoHideDuration: 3000 });
+
+				await waitSec(2000);
+				setSelectedIndex(2);
+				navigate('/user-dashboard');
+			}
+
 			
-				setFareClass({ isActiveError: true });
-					await waitSec(1000);
-				setFareClass({ isActiveError: false });
+		} catch (err) {
+			console.log(err)
+		}
+		finally{
+
+		setBookingModal(!bookingModal);
 
 		}
 
-		dispatch(storePassengerNumber({ totalCount: totalPassenger, senior: senior, student: student, regular: regular, child: child,infant:infant, passengerClass: fare_type }));
 
-		setBookingModal(!bookingModal);
+	
 	};
 
 	
@@ -167,7 +197,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 					<hr className='borderGray mt-2' />
 					{!isEmpty(data) &&
 						data?.map((schedule: BookingSchedules) => (
-							<>
+							
 								<div key={schedule.schedule_id} className='relative flex justify-between gap-1 border border-1 border-gray-200 my-4 bg-white p-5 rounded-md'>
 									<div className='flex flex-col gap-2 indicator w-full px-4'>
 										<div className='flex justify-between items-start mb-2'>
@@ -199,7 +229,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 										
 									</div>
 								</div>
-							</>
+							
 						))}
 					<RenderIf value={bookingModal == true}>
 						<PopupModal>
