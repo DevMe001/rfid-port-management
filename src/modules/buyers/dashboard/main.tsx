@@ -5,10 +5,10 @@ import '../styles/dashboard-main.css'
 import clsx from 'clsx';
 import useNavigationHandler from '../../../utils/hooks/useNavigationHandler';
 import { RootState, useAppSelector } from '../../../utils/redux/store';
-import { Button, Label, TextInput, Datepicker } from 'flowbite-react';
+import { Button, Label, TextInput } from 'flowbite-react';
 import { FaSave, FaRegUserCircle } from 'react-icons/fa';
 import { BiRfid } from 'react-icons/bi';
-import { Formik, Form, ErrorMessage, FieldProps,Field, FormikProps } from 'formik';
+import { Formik, Form, ErrorMessage, FieldProps,Field } from 'formik';
 import * as Yup from 'yup';
 import { useAddPersonalDetailsMutation, useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import { enqueueSnackbar } from 'notistack';
@@ -16,7 +16,7 @@ import { isEmpty, isNull } from 'lodash';
 import { useGetProfileAccountQuery, useUpdateProfileAvatarMutation } from '../../../api-query/account-api';
 import { IUser } from '../../../utils/redux/slicer/authSlice';
 import Immutable from '../../../immutable/constant';
-import moment from 'moment';
+
 import displayFullName from '../../../utils';
 import dayjs from 'dayjs';
 

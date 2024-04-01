@@ -2,7 +2,7 @@ import  React,{ useCallback, useEffect, useState } from 'react';
 import RenderIf from '../../../common/components/ui/render-if';
 import Stepper from '../../../common/widget/stepper';
 import { onActiveMode, onToggleBookingModal, onToggleNavHomepageMobile, useGlobaLoader } from '../../../utils/hooks/globa.state';
-import { Formik, Form, FormikProps, Field } from 'formik';
+import { Formik, Form, FormikProps } from 'formik';
 import { RootState, useAppDispatch, useAppSelector } from '../../../utils/redux/store';
 
 import * as Yup from 'yup';
@@ -22,11 +22,11 @@ import CustomButton from '../../../common/components/ui/button.componetnt';
 import PassengerFormDetails from './components/passenger-form.component';
 import { GiCargoShip } from 'react-icons/gi';
 import Immutable from '../../../immutable/constant';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useGetBookingScheduleByIdQuery } from '../../../api-query/schedule-list.api';
 import dateArrival from '../../../utils/dateFormat';
 import { enqueueSnackbar } from 'notistack';
-import { PassegerForms, storePassengerForm } from '../../../utils/redux/slicer/passengerformSlice';
+import { storePassengerForm } from '../../../utils/redux/slicer/passengerformSlice';
 import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import displayFullName from '../../../utils';
 

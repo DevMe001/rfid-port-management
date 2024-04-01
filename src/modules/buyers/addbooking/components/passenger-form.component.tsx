@@ -23,7 +23,7 @@ type PassengerFormProps = {
 	css?: Interpolation<Theme>;
 } & ComponentProps<'div'>;
 
-const PassengerForm: React.FC<PassengerFormProps> = ({ passengerType,indexLabel, identifyAs, seatNumber, onSeatChosen, vehicleCondition, onPassengerVehicleAdd, onPassengerVehicleRemove,onDateGetAge,onSelectValue, ...divProps }) => {
+const PassengerForm: React.FC<PassengerFormProps> = ({ passengerType,indexLabel, identifyAs, seatNumber, onSeatChosen, vehicleCondition, onPassengerVehicleAdd, onPassengerVehicleRemove,onDateGetAge, ...divProps }) => {
 	
 	const { data: vehiclesAvailable } = useGetBookingVehicleTypeQuery({}, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
 

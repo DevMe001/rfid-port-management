@@ -1,5 +1,5 @@
-import store, {  useAppDispatch } from '../redux/store'
-import { revertUser } from '../redux/slicer/authSlice';
+import store from '../redux/store'
+
 import { useNavigate } from 'react-router-dom';
 import { enqueueSnackbar } from 'notistack';
 import waitSec from '../setTimeout';
@@ -9,8 +9,6 @@ import { persistStore } from 'redux-persist';
 
 
 const useNavigationHandler = () => {
-
-   const dispatch = useAppDispatch();
 
    const navigate = useNavigate();
 
