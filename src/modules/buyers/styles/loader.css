@@ -1,0 +1,21 @@
+:root{
+  --gray:rgba(148, 145, 145, 0.9);
+  --lite:rgba(241, 240, 232,0.8);
+}
+
+
+.loader-effect{
+  width:5rem;
+  height:5rem;
+  border-radius: 50%;
+  border: 11.5px solid var(--lite);
+  border-right-color: var(--gray);
+  animation: spin 1s infinite linear;
+}
+
+
+@keyframes spin{
+  to{
+    transform: rotate(1turn);
+  }
+}

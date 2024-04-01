@@ -1,14 +1,15 @@
 import  React,{ useCallback, useEffect, useState } from 'react';
 import RenderIf from '../../../common/components/ui/render-if';
 import Stepper from '../../../common/widget/stepper';
-import { onActiveMode, onToggleBookingModal, onToggleNavHomepageMobile, useSeatTaken } from '../../../utils/hooks/globa.state';
-import { Formik, Field, Form, ErrorMessage, FormikProps } from 'formik';
+import { onActiveMode, onToggleBookingModal, onToggleNavHomepageMobile, useGlobaLoader } from '../../../utils/hooks/globa.state';
+import { Formik, Form, FormikProps, Field } from 'formik';
 import { RootState, useAppDispatch, useAppSelector } from '../../../utils/redux/store';
 
 import * as Yup from 'yup';
-import { isEmpty, isNull } from 'lodash';
+import { isEmpty } from 'lodash';
 
 import '../styles/book-list.css'
+import '../styles/loader.css'
 import PopupModal from '../../../common/widget/modal/popup.,modal';
 import { MdEventSeat } from 'react-icons/md';
 
@@ -25,60 +26,168 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useGetBookingScheduleByIdQuery } from '../../../api-query/schedule-list.api';
 import dateArrival from '../../../utils/dateFormat';
 import { enqueueSnackbar } from 'notistack';
-import { storePassengerForm } from '../../../utils/redux/slicer/passengerformSlice';
+import { PassegerForms, storePassengerForm } from '../../../utils/redux/slicer/passengerformSlice';
 import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import displayFullName from '../../../utils';
 
 import { BiRfid } from 'react-icons/bi';
+import { usePayOrderMutation } from '../../../api-query/payment-api';
+import { PaymentOrder } from '../../../api-query/types';
+import LoaderSpinner from '../../../common/widget/loader';
+
+import dayjs from 'dayjs';
+import { storePayment } from '../../../utils/redux/slicer/paymentSlice';
+import InputFieldForm from '../../../common/components/ui/field-form';
 
 interface Passenger {
-	firstName: string;
-	lastName: string;
+	firstname: string;
+	lastname: string;
 	age: number;
 	gender: string;
-	bdate?: string;
-	seat: string;
-	seatNumber: number;
+	birthdate: Date | string;
+	seatNumber: string;
+	seatPosition: string;
 	fare_type: string;
 	vehicleChosen?: VehiclePassenger;
 	rangePrice?: number;
+	personal_id?: string;
 }
 
 interface VehiclePassenger {
 	owner_name: string;
 	plate_number: string;
-	vehicle_id: string;
+	vehicletype_id: string;
+}
+
+const seniorAgo = dayjs().subtract(60, 'year').format('YYYY-MM-DD');
+const dateNow = dayjs().format('YYYY-MM-DD');
+
+
+
+// const passengerSchema = Yup.object().shape({
+// 	firstName: Yup.string().required('First name is required'),
+// 	lastName: Yup.string().required('Last name is required'),
+// 	age: Yup.number().required('Age is required').min(1, 'Age is not allowed'),
+// 	gender: Yup.string().required('Gender is required'),
+// 	bdate: Yup.date().max(eighteen_years_ago, 'You must be at least 18 years old to register'),
+// 	seat: Yup.string(),
+// 	seatNumber: Yup.string(),
+// 	fare_type: Yup.string(),
+// 	vehicleChosen: Yup.object(),
+// });
+
+function validatorSchemaHandler(passengerType: string) {
+	const schema = Yup.object().shape({
+		firstname: Yup.string().required('First name is required'),
+		lastname: Yup.string().required('Last name is required'),
+		age: Yup.number().required('Age is required').min(60, 'Senior must be 60 yrs old and above'),
+		gender: Yup.string().required('Gender is required'),
+		birthdate: Yup.date().max(seniorAgo, 'You must be at least 60 years old to register'),
+		seatPosition: Yup.string().required(),
+		seatNumber: Yup.string(),
+		fare_type: Yup.string(),
+		personal_id: Yup.string(),
+		vehicleChosen: Yup.object(),
+	});
+
+
+	  if (passengerType === 'infant') {
+			return schema.shape({
+				age: Yup.number().required('Age is required').min(1, 'Age is not allowed').max(3, 'Age must be 1 - 3 years old'),
+				birthdate: Yup.date().test('senior-bdate', 'Age must 1 to 3 years old', function (value) {
+					let dateValue = dayjs().diff(dayjs(value), 'year');
+
+					if (dateValue >= 1 && dateValue <= 3) {
+						return true;
+					} else {
+						return false;
+					}
+				}),
+			});
+		} 
+		  if (passengerType === 'child') {
+				return schema.shape({
+					age: Yup.number().required('Age is required').min(4, 'Age is not allowed').max(11, 'Age must be 4 - 11 years old'),
+
+					birthdate: Yup.date().test('child-birthdate', 'Age must 4 to 11 years old', function (value) {
+						let dateValue = dayjs().diff(dayjs(value), 'year');
+
+						if (dateValue >= 4 && dateValue <= 11) {
+							return true;
+						} else {
+							return false;
+						}
+					}),
+				});
+			}
+
+
+					  if (passengerType === 'pwd') {
+							return schema.shape({
+								age: Yup.number().required('Age is required').min(1, 'Age is not allowed').max(100, 'Age at least one years old'),
+
+								birthdate: Yup.date().test('pwd-birthdate', 'Age at least one years old', function (value) {
+									let dateValue = dayjs().diff(dayjs(value), 'year');
+
+									console.log(dateValue, 'get valie');
+									if (dateValue >= 1) {
+										return true;
+									} else {
+										return false;
+									}
+								}),
+							});
+						}
+
+					  if (passengerType === 'student') {
+							return schema.shape({
+								age: Yup.number().required('Age is required').min(12, 'Age is not allowed').max(22, 'Age must be 12 - 22 years old'),
+
+								birthdate: Yup.date().test('student-birthdate', 'Age must 4 to 11 years old', function (value) {
+									let dateValue = dayjs().diff(dayjs(value), 'year');
+
+									if (dateValue >= 12 && dateValue <= 22) {
+										return true;
+									} else {
+										return false;
+									}
+								}),
+							});
+						}
+						  if (passengerType === 'regular') {
+								return schema.shape({
+									age: Yup.number().required('Age is required').min(23, 'Age is not allowed').max(49, 'Age must be 23 - 49 years old'),
+
+									birthdate: Yup.date().test('regular-birthdate', 'Age must 23 to 49 years old', function (value) {
+										let dateValue = dayjs().diff(dayjs(value), 'year');
+
+										if (dateValue >= 23 && dateValue <= 49) {
+											return true;
+										} else {
+											return false;
+										}
+									}),
+								});
+							} else {
+								return schema;
+							}
 }
 
 
-
-
-const passengerSchema = Yup.object().shape({
-	firstName: Yup.string().required('First name is required'),
-	lastName: Yup.string().required('Last name is required'),
-	age: Yup.number(),
-	gender: Yup.string().required('Gender is required'),
-	bdate: Yup.string(),
-	seat: Yup.string(),
-	seatNumber: Yup.string(),
-	fare_type: Yup.string(),
-	vehicleChosen: Yup.object(),
-});
-
-
 export const formSchema = Yup.object().shape({
-	seniorPwd: Yup.number(),
+	senior: Yup.number(),
+	pwd: Yup.number(),
 	students: Yup.number(),
 	regulars: Yup.number(),
 	child: Yup.number(),
 	infant: Yup.number(),
-	seniorPwdPassenger: Yup.array().of(passengerSchema),
-	studentPassengers: Yup.array().of(passengerSchema),
-	childPassengers: Yup.array().of(passengerSchema),
-	regularPassengers: Yup.array().of(passengerSchema),
-	infantPassengers:Yup.array().of(passengerSchema),
+	seniorPassenger: Yup.array().of(validatorSchemaHandler('senior')),
+	pwdPassenger: Yup.array().of(validatorSchemaHandler('pwd')),
+	studentPassengers: Yup.array().of(validatorSchemaHandler('student')),
+	childPassengers: Yup.array().of(validatorSchemaHandler('child')),
+	regularPassengers: Yup.array().of(validatorSchemaHandler('regular')),
+	infantPassengers: Yup.array().of(validatorSchemaHandler('infant')),
 });
-
 
 
 
@@ -87,7 +196,7 @@ const BookingById:React.FC = () => {
 
 
 	const [toggle] = onToggleNavHomepageMobile();
-	const passenger = useAppSelector((state) => state.countPassenger);
+	const passenger = useAppSelector((state:RootState) => state.countPassenger);
 	// const [displayError, setDisplayError] = useState<string>('');
 	const [seatChosen, selectedSeat] = useState<string>('');
 	const [seatCall, seatTagLine] = useState<number>(0);
@@ -96,7 +205,9 @@ const BookingById:React.FC = () => {
 	const [seatSelectedNumber, setSelectedSeatNumber] = useState<string>('');
 	const [getDisplayPassenger,setDisplayValue] = useState<any>({});
 	const [passengerVehicle,setPassengerVehicle] = useState<boolean>(false);
+	const [payOrder] = usePayOrderMutation();
 
+	const [loader, setLoader] = useGlobaLoader();
 
 
 	const params = useParams();
@@ -116,7 +227,7 @@ const BookingById:React.FC = () => {
 
 	const [payModal, setPayModal] = onToggleBookingModal();
 
-	// const navigate = useNavigate();
+	//  const navigate = useNavigate();
 
 		const showBookDisplay = passengerFormList.isSubmitted ? 1 : 0;
 
@@ -125,13 +236,17 @@ const BookingById:React.FC = () => {
 
 
 
-		console.log(showBookDisplay,'get form details');
 
-		const [tabValue, setCurrentTab] = useState<number>(0);
+
+		const [tabValue, setCurrentTab] = useState<number>(showBookDisplay);
 
 	const dispatch = useAppDispatch();
 
 		const [getSeat, reserveSeat] = onToggleBookingModal();
+
+
+
+
 
 
 		useEffect(() => {
@@ -149,7 +264,7 @@ const BookingById:React.FC = () => {
 			behavior: 'smooth',
 		});
 		document.body.style.overflow = 'hidden';
-		setSelectedId(`${type}.${index}.seat`);
+		setSelectedId(`${type}.${index}.seatPosition`);
 		setSelectedSeatNumber(`${type}.${index}.seatNumber`);
 
 	
@@ -176,12 +291,10 @@ const BookingById:React.FC = () => {
 
 		let seatAlreadyTaken = false;
 
-			values[splitSelectedId[0]].map((item: { seat: string }) => {
-				if (isEmpty(item.seat)) {
+			values[splitSelectedId[0]].map((item: { seatPosition: string }) => {
+				if (isEmpty(item.seatPosition)) {
 					seatAlreadyTaken = true;
 				}
-
-				console.log(item,'get list items');
 			});
 		
 		if(seatAlreadyTaken){
@@ -338,8 +451,8 @@ const onSeatSelectedClear = (formikProps: FormikProps<any>) => {
 	let seatValueInput = '';
 	
 	
-	values[selectedValue[0]].map((item:{seat:string}) => {
-		seatValueInput = item.seat;
+	values[selectedValue[0]].map((item: { seatPosition: string }) => {
+		seatValueInput = item.seatPosition;
 	});
 
 	const index = seatArrNumber.indexOf(seatValueInput);
@@ -361,8 +474,13 @@ function passegerList() {
 	let passengerType = '';
 
 	if (passenger.senior > 0) {
-		passengerType += 'Senior/Pwd ';
+		passengerType += 'Senior ';
 	}
+
+		if (passenger.pwd > 0) {
+		passengerType += 'Pwd ';
+	}
+
 
 	if (passenger.student > 0) {
 		passengerType += 'Student ';
@@ -416,22 +534,28 @@ function calculatePassengersVehicle() {
 		}
 	}
 
-	const { seniorPwdPassenger, regularPassengers, studentPassengers } = passengerFormList;
+	const { seniorPassenger, regularPassengers, studentPassengers } = passengerFormList;
 
-	if (seniorPwdPassenger && seniorPwdPassenger.length > 0) {
-		seniorPwdPassenger.forEach((item) => {
+
+	if (seniorPassenger && seniorPassenger.length > 0) {
+		seniorPassenger.forEach((item) => {
 			if (item.vehicleChosen) {
-				const vehicleSplit = item.vehicleChosen.vehicle_id.split(',');
 
-				pushUniqueRecord(vehicleSplit[0], vehicleSplit[1], vehicleSplit[2], item.vehicleChosen.owner_name, item.vehicleChosen.plate_number, 'senior/pwd');
+				console.log(item.vehicleChosen );
+
+				const vehicleSplit = item.vehicleChosen?.vehicletype_id?.split(',');
+
+				pushUniqueRecord(vehicleSplit[0], vehicleSplit[1], vehicleSplit[2], item.vehicleChosen.owner_name, item.vehicleChosen.plate_number, 'senior');
 			}
 		});
 	}
 
+
+
 	if (regularPassengers && regularPassengers.length > 0) {
 		regularPassengers.forEach((item) => {
 			if (item.vehicleChosen) {
-				const vehicleSplit = item.vehicleChosen.vehicle_id.split(',');
+				const vehicleSplit = item.vehicleChosen?.vehicletype_id?.split(',');
 		
 				pushUniqueRecord(vehicleSplit[0], vehicleSplit[1], vehicleSplit[2], item.vehicleChosen.owner_name, item.vehicleChosen.plate_number, 'regular');
 			}
@@ -441,7 +565,7 @@ function calculatePassengersVehicle() {
 	if (studentPassengers && studentPassengers.length > 0) {
 		studentPassengers.forEach((item) => {
 			if (item.vehicleChosen) {
-				const vehicleSplit = item.vehicleChosen.vehicle_id.split(',');
+				const vehicleSplit = item.vehicleChosen?.vehicletype_id?.split(',');
 				
 				pushUniqueRecord(vehicleSplit[0], vehicleSplit[1], vehicleSplit[2], item.vehicleChosen.owner_name, item.vehicleChosen.plate_number, 'student');
 			}
@@ -459,7 +583,15 @@ function calculatePassengersVehicle() {
 
 	})
 
-let totalVehicles = vehicles.reduce((acc, cur) => acc + Number(cur.carrierFee), 0);
+let totalVehicles = vehicles.reduce((acc, cur) => {
+
+	if (cur.carrierFee) {
+		return acc + Number(cur.carrierFee);
+	} else {
+		return acc;
+	}
+
+}, 0);
 
 
 
@@ -469,18 +601,21 @@ let totalVehicles = vehicles.reduce((acc, cur) => acc + Number(cur.carrierFee), 
 
 function calculatePassengers(){
 		let type = passenger.passengerClass;
-		let senior = 0,student=0,child=0,regular=0,infant=0;
+		let senior = 0,student=0,child=0,regular=0,infant=0,pwd=0;
 		let countSenior = passenger.senior;
+		let countPwd = passenger.pwd;
 		let countStudent = passenger.student;
 		let countRegular = passenger.regular;
 		let countChild = passenger.child;
 		let countInfant = passenger.infant;
 		let terminalFee = 10;
 		let serviceFee = 10;
+		let discount  = 0.20;
 
 
 		if(type === 'economy'){
 				senior = 757 * countSenior;
+				pwd = 757 * countPwd;
 				student = 848 * countStudent;
 				regular = 1060 * countRegular;
 				child = 530 * countChild;
@@ -489,6 +624,7 @@ function calculatePassengers(){
 		}
 		if(type === 'tourist'){
 				senior = 757 * countSenior;
+				pwd = 757 * countPwd;
 				student = 848 * countStudent;
 				regular = 1060 * countRegular;
 				child = 530 * countChild;
@@ -497,9 +633,12 @@ function calculatePassengers(){
 
 		let displayFareRate = '';
 
+		let seniorDiscounted = (senior + terminalFee + serviceFee) * discount;
+		let pwdDiscounted = (pwd + terminalFee + serviceFee) * discount;
 
 		let passengerTotalList = [
-			{ label: 'senior /pwd ', count: countSenior, total: senior + terminalFee * serviceFee },
+			{ label: 'senior ', count: countSenior, total: senior + terminalFee * serviceFee - seniorDiscounted },
+			{ label: 'pwd ', count: countPwd, total: (pwd + terminalFee * serviceFee) - pwdDiscounted },
 			{ label: ' student ', count: countStudent, total: student },
 			{ label: ' regular', count: countRegular, total: regular + terminalFee * serviceFee },
 			{ label: ' child', count: countChild, total: child },
@@ -508,7 +647,8 @@ function calculatePassengers(){
 
 		passengerTotalList.map((list) =>{
 			if(list.count !== 0){
-				displayFareRate += `${list.label} (${list.count} x ₱ ${list.total})`;
+
+					displayFareRate += `${list.label} (${list.count} x ₱ ${list.total}) ,`;
 			}
 		})
 
@@ -530,12 +670,73 @@ const onPaymentProcess = useCallback(() => {
 }, [payModal]);
 
 
-// onActiveIndicatorMode
+const onPaymentProceeed = useCallback(async()=>{
 
+	let totalAmount = Number(Number(calculatePassengers()[1]) + Number(calculatePassengersVehicle()[1])).toFixed(2);
+
+		if (Number(totalAmount)  > 0) {
+			let getAddress = userProfileDetails?.address as string;
+
+			let addressSplice = getAddress.split(' ');
+			const paymentForm: PaymentOrder = {
+				name: displayFullName(userProfileDetails?.firstname, userProfileDetails?.midlename, userProfileDetails?.lastname),
+				email: user?.email,
+				mobile: userProfileDetails?.mobileNumber as string,
+				description: 'Booking id 1234',
+				productName: 'Booking 101',
+				amount: Number(totalAmount),
+				address: {
+					city: `${addressSplice[0]} ${addressSplice[1]}`,
+					state: addressSplice[2],
+					postal_code: '3202',
+					country: 'PH',
+				},
+				booking_id: params.bookId as string,
+			};
+
+			const paymentResponse: any = await payOrder({ ...paymentForm });
+
+			dispatch(storePayment({
+				amount: Number(totalAmount),
+				schedule_id:getParamsSchedule?.schedule_id as string,
+				vehicle_id: getParamsSchedule?.vehicle.vehicle_id as string
+			}));
+
+			setLoader(true);
+
+			await waitSec(2000);
+
+			setLoader(false);
+
+			location.href = paymentResponse?.data.data?.attributes?.checkout_url;
+		}
+},[])
+
+
+const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEvent<HTMLInputElement>, selectedId: string, formikProps: FormikProps<any>) => {
+
+	let value = '';
+
+	if ('currentTarget' in e) {
+		value = (e.currentTarget as HTMLInputElement).value;
+	} 
+
+	let chosenYear = new Date(value).getFullYear();
+	let currentYear = new Date().getFullYear();
+	let dateDiff = Math.abs(currentYear - chosenYear);
+
+		
+		formikProps.setFieldValue(`${selectedId}.birthdate`, value);
+		formikProps.setFieldValue(`${selectedId}.age`, dateDiff);
+
+
+};
+// onActiveIndicatorMode
 
 useEffect(() => {
 	return setActive({ isActive: true });
 }, [isActive]);
+
 
 	return (
 		<RenderIf value={!toggle}>
@@ -544,83 +745,151 @@ useEffect(() => {
 					<Stepper isActive={isActive} index={tabValue} />
 					<Formik
 						initialValues={{
-							seniorPwd: passenger.senior,
+							senior: passenger.senior,
 							students: passenger.student,
 							regulars: passenger.regular,
 							child: passenger.child,
 							infant: passenger.infant,
+							pwd: passenger.pwd,
 
-							seniorPwdPassenger: Array.from({ length: passenger.senior }, () => ({
-								firstName: '',
-								lastName: '',
+							seniorPassenger: Array.from({ length: passenger.senior }, () => ({
+								firstname: '',
+								lastname: '',
 								age: 0,
 								gender: '',
 								fare_type: 'senior',
-								seat: '',
-								seatNumber: 0,
+								seatPosition: '',
+								seatNumber: '',
 								rangePrice: 757,
+								birthdate: dateNow,
+								personal_id: userProfileDetails?.personal_id,
+								vehicleChosen: {
+									owner_name: '',
+									plate_number: '',
+									vehicletype_id: '0',
+								},
+							})),
+							pwdPassenger: Array.from({ length: passenger.pwd }, () => ({
+								firstname: '',
+								lastname: '',
+								age: 0,
+								gender: '',
+								fare_type: 'pwd',
+								seatPosition: '',
+								seatNumber: '',
+								rangePrice: 757,
+								birthdate: dateNow,
+								personal_id: userProfileDetails?.personal_id,
+								vehicleChosen: {
+									owner_name: '',
+									plate_number: '',
+									vehicletype_id: '0',
+								},
 							})),
 							studentPassengers: Array.from({ length: passenger.student }, () => ({
-								firstName: '',
-								lastName: '',
+								firstname: '',
+								lastname: '',
 								age: 0,
 								gender: '',
 								fare_type: 'student',
-								seat: '',
-								seatNumber: 0,
+								seatPosition: '',
+								seatNumber: '',
 								rangePrice: 848,
+								birthdate: dateNow,
+								personal_id: userProfileDetails?.personal_id,
+								vehicleChosen: {
+									owner_name: '',
+									plate_number: '',
+									vehicletype_id: '0',
+								},
 							})),
 							childPassengers: Array.from({ length: passenger.child }, () => ({
-								firstName: '',
-								lastName: '',
+								firstname: '',
+								lastname: '',
 								age: 0,
 								gender: '',
 								fare_type: 'child',
-								seat: '',
-								seatNumber: 0,
+								seatPosition: '',
+								seatNumber: '',
 								rangePrice: 530,
+								birthdate: dateNow,
+								personal_id: userProfileDetails?.personal_id,
+								vehicleChosen: {
+									owner_name: '',
+									plate_number: '',
+									vehicletype_id: '0',
+								},
 							})),
 							regularPassengers: Array.from({ length: passenger.regular }, () => ({
-								firstName: '',
-								lastName: '',
+								firstname: '',
+								lastname: '',
 								age: 0,
 								gender: '',
 								fare_type: 'regular',
-								seat: '',
-								seatNumber: 0,
+								seatPosition: '',
+								seatNumber: '',
 								rangePrice: 1060,
+								birthdate: dateNow,
+								personal_id: userProfileDetails?.personal_id,
+								vehicleChosen: {
+									owner_name: '',
+									plate_number: '',
+									vehicletype_id: '0',
+								},
 							})),
 
 							infantPassengers: Array.from({ length: passenger.infant }, () => ({
-								firstName: '',
-								lastName: '',
+								firstname: '',
+								lastname: '',
 								age: 0,
 								gender: '',
 								fare_type: 'infant',
-								seat: '',
-								seatNumber: 0,
+								seatPosition: '',
+								seatNumber: '',
 								rangePrice: 60,
+								birthdate: dateNow,
+								personal_id: userProfileDetails?.personal_id,
+								vehicleChosen: {
+									owner_name: '',
+									plate_number: '',
+									vehicletype_id: '0',
+								},
 							})),
 						}}
 						validationSchema={formSchema}
-						onSubmit={(values, { setSubmitting }) => {
+						onSubmit={async (values, { setSubmitting }) => {
+							setLoader(true);
+
+							await waitSec(2000);
+
+							setLoader(false);
 							// Handle form submission
+
 							console.log(values);
 
+							const seniorOverridePassenger = values.seniorPassenger.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] }));
+							const studentOverridePassenger = values.studentPassengers.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] }));
+							const regularOverridePassenger = values.regularPassengers.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] }));
+						
+						
+
 							const payload = {
-								isSubmitted:true,
-								seniorPwdPassenger: values.seniorPwdPassenger,
-								studentPassengers: values.studentPassengers,
-								regularPassengers: values.regularPassengers,
+								isSubmitted: true,
+								seniorPassenger: seniorOverridePassenger,
+								pwdPassenger: values.pwdPassenger,
+								studentPassengers: studentOverridePassenger,
+								regularPassengers:regularOverridePassenger,
 								childPassengers: values.childPassengers,
 								infantPassengers: values.infantPassengers,
 							};
 
-							dispatch(storePassengerForm(payload));
+					
+							 dispatch(storePassengerForm(payload));
 
 							setDisplayValue(values);
 							// Add your submission logic here
 							setSubmitting(false); // Ensure to reset form submission status
+
 							setActive({ isActive: true, index: 1 });
 							setCurrentTab(1);
 						}}
@@ -634,38 +903,51 @@ useEffect(() => {
 
 								{/* {!isEmpty(displayError) && <div className='text-lite font-bold py-3 px-5 bg-accent text-center'>{displayError}</div>} */}
 
-								{[...Array(formikProps.values.seniorPwd)].map((_, index) => (
-									<div key={`adults-${index}`}>
+								{[...Array(formikProps.values.senior)].map((_, index) => (
+									<div key={`senior-${index}`}>
 										{/* // @ts-ignore */}
-										<PassengerFormDetails identifyAs={`seniorPwdPassenger.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.seniorPwdPassenger[index].seatNumber as number} onSeatChosen={() => onSeat('seniorPwdPassenger', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'seniorPwdPassenger', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'seniorPwdPassenger', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Senior/Pwd'} />
+
+										<PassengerFormDetails identifyAs={`seniorPassenger.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.seniorPassenger[index].seatNumber} onSeatChosen={() => onSeat('seniorPassenger', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'seniorPassenger', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'seniorPassenger', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Senior'} onDateGetAge={(e) => onDateSetRetrival(e, `seniorPassenger.${index}`, formikProps)} />
+
+							
+									</div>
+								))}
+
+								{[...Array(formikProps.values.pwd)].map((_, index) => (
+									<div key={`pwd-${index}`}>
+										{/* // @ts-ignore */}
+										<PassengerFormDetails identifyAs={`pwdPassenger.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.pwdPassenger[index].seatNumber} onSeatChosen={() => onSeat('pwdPassenger', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'pwdPassenger', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'pwdPassenger', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Pwd'} onDateGetAge={(e) => onDateSetRetrival(e, `pwdPassenger.${index}`, formikProps)} />
 									</div>
 								))}
 
 								{[...Array(formikProps.values.students)].map((_, index) => (
 									<div key={`students-${index}`}>
 										{/* // @ts-ignore */}
-										<PassengerFormDetails identifyAs={`studentPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.studentPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('studentPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'studentPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'studentPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Student'} />
+										<PassengerFormDetails identifyAs={`studentPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.studentPassengers[index].seatNumber} onSeatChosen={() => onSeat('studentPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'studentPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'studentPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Student'} onDateGetAge={(e) => onDateSetRetrival(e, `studentPassengers.${index}`, formikProps)} />
+
+										<InputFieldForm type='hidden' identifyAs={`studentPassengers.${index}`} fieldName='vehicletype_id' value={formikProps.values.seniorPassenger[index].vehicleChosen.vehicletype_id.split(',')[0] ?? undefined} />
 									</div>
 								))}
 
 								{[...Array(formikProps.values.regulars)].map((_, index) => (
 									<div key={`regulars-${index}`}>
 										{/* // @ts-ignore */}
-										<PassengerFormDetails identifyAs={`regularPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.regularPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('regularPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'regularPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'regularPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Regular'} />
+										<PassengerFormDetails identifyAs={`regularPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.regularPassengers[index].seatNumber} onSeatChosen={() => onSeat('regularPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'regularPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'regularPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Regular'} onDateGetAge={(e) => onDateSetRetrival(e, `regularPassengers.${index}`, formikProps)} />
+										<InputFieldForm type='hidden' identifyAs={`regularPassengers.${index}`} fieldName='vehicletype_id' value={formikProps.values.seniorPassenger[index].vehicleChosen.vehicletype_id.split(',')[0] ?? undefined} />
 									</div>
 								))}
 
 								{[...Array(formikProps.values.child)].map((_, index) => (
 									<div key={`child-${index}`}>
 										{/* // @ts-ignore */}
-										<PassengerFormDetails identifyAs={`childPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.childPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('childPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'childPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'childPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Child'} />
+										<PassengerFormDetails identifyAs={`childPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.childPassengers[index].seatNumber} onSeatChosen={() => onSeat('childPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'childPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'childPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Child'} onDateGetAge={(e) => onDateSetRetrival(e, `childPassengers.${index}`, formikProps)} />
 									</div>
 								))}
 
 								{[...Array(formikProps.values.infant)].map((_, index) => (
 									<div key={`infant-${index}`}>
 										{/* // @ts-ignore */}
-										<PassengerFormDetails identifyAs={`infantPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.infantPassengers[index].seatNumber as number} onSeatChosen={() => onSeat('infantPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'infantPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'infantPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Infant'} />
+										<PassengerFormDetails identifyAs={`infantPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.infantPassengers[index].seatNumber} onSeatChosen={() => onSeat('infantPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'infantPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'infantPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Infant'} onDateGetAge={(e) => onDateSetRetrival(e, `infantPassengers.${index}`, formikProps)} />
 									</div>
 								))}
 
@@ -724,7 +1006,6 @@ useEffect(() => {
 						</div>
 					</div>
 					<div className='flex flex-col gap-5  w-9/12 mx-auto rounded shadow-md p-10 my-12 borderGeray'>
-						
 						<div className='flex items-evenly items-center flex-col gap-1'>
 							<a target='blank' href={`${Immutable.API}/vehicle?photo=${getParamsSchedule?.vehicle.vehicle_id as string}`}>
 								<img src={`${Immutable.API}/vehicle?photo=${getParamsSchedule?.vehicle.vehicle_id as string}`} className='object-contain rounded' width={80} height={100} />
@@ -790,6 +1071,7 @@ useEffect(() => {
 							</label>
 							<span className='capitalize font-medium'>{calculatePassengers()[0]}</span>
 						</div>
+
 						<div className='flex justify-end'>
 							<label htmlFor='total' className='font-medium'>
 								Passenger Amount
@@ -817,6 +1099,26 @@ useEffect(() => {
 								</p>
 							</div>
 						</RenderIf>
+						<RenderIf value={passenger.senior > 0 || passenger.pwd > 0}>
+							<div className='flex justify-end '>
+								<label htmlFor='total' className='font-medium'>
+									Senior/Pwd discount
+								</label>
+								<p className='font-normal'>
+									{' '}
+									&nbsp; &#8369; <span className='font-medium'>{Number(20)}%</span>
+								</p>
+							</div>
+						</RenderIf>
+						<div className='flex justify-end '>
+							<label htmlFor='total' className='font-medium'>
+								Service/Terminal fee:
+							</label>
+							<p className='font-normal'>
+								{' '}
+								&nbsp; &#8369; <span className='font-medium'>{Number(20)} x 2</span>
+							</p>
+						</div>
 						<div className='flex justify-end '>
 							<label htmlFor='total' className='font-medium'>
 								Total
@@ -836,19 +1138,18 @@ useEffect(() => {
 								</div>
 								<div className='flex justify-center gap-5 flex-wrap w-[30rem] h-[10rem] mt-8 relative z-10'>
 									<div>
-										<div className=' flex items-baseline gap-2 shadow-md p-10 bg-indigo-500 text-white rounded cursor-pointer'>
-											<label htmlFor='reload' className='font-medium'>
+										<div className=' flex items-baseline gap-2 shadow-md p-10 bg-indigo-500 text-white rounded cursor-pointer' onClick={onPaymentProceeed}>
+											<label htmlFor='reload' className='font-medium cursor-pointer'>
 												Buy RFID
 											</label>
 											<i id='reload'>
-												{' '}
 												<BiRfid />
 											</i>
 										</div>
 									</div>
 									<div>
 										<div className=' flex items-baseline gap-2 shadow-md p-10 bg-accent text-white rounded cursor-pointer'>
-											<label htmlFor='buy' className='font-medium'>
+											<label htmlFor='buy' className='font-medium cursor-pointer'>
 												Use RFID
 											</label>
 											<i id='buy'>
@@ -868,6 +1169,8 @@ useEffect(() => {
 			<RenderIf value={tabValue == 3}>
 				<div>Payment List</div>
 			</RenderIf>
+
+			<LoaderSpinner load={loader} />
 		</RenderIf>
 	);
 };

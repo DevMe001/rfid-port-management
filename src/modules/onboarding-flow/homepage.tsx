@@ -11,6 +11,7 @@ import RenderIf from '../../common/components/ui/render-if';
 import FooterMd from './layout/homepage-footer-md';
 import FooterXS from './layout/homepage-footer-sm';
 import { onToggleNavHomepageMobile } from '../../utils/hooks/globa.state';
+import { isUndefined } from 'lodash';
 
 
 const HomePage = () => {
@@ -48,7 +49,7 @@ const HomePage = () => {
 				addUser({
 					id: data.profile.id,
 					displayName: data.profile.displayName,
-					email: data.profile.emails[0].value,
+					email: !isUndefined(data.profile.emails) ? data.profile.emails[0].value : data.profile.displayName,
 					picture: data.profile.photos[0].value,
 					accessToken: data.accessToken,
 				}),

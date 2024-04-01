@@ -14,3 +14,5 @@ export const useSeatTaken = createGlobalState<boolean>(false);
 export const useSelectIndex = createGlobalState<number>(0);
 
 export const onToggleAuthBox = createGlobalState<boolean>(false);
+
+export const useGlobaLoader = createGlobalState<boolean>(false);

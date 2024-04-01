@@ -1,45 +1,48 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit"
-import { formSchema } from "../../../modules/buyers/addbooking/bookingById"
-import passengerSlice from "./passengerSlice";
+import { PURGE } from "redux-persist";
+import { PersonalInformation } from "../../../api-query/types";
 
 
-
-interface Passenger {
-	firstName: string;
-	lastName: string;
+interface Passenger extends Partial<VehiclePassenger> {
+	firstname: string;
+	lastname: string;
 	age: number;
 	gender: string;
-	bdate?: string;
-	seat: string;
-	seatNumber: number;
-	fare_type: string;
+	birthdate?: Date | string;
+	seatNumber: string;
+	seatPosition: string;
+	fare_type: 'student' | 'regular' | 'adult' | 'minor' | string;
+	rangePrice?: number;
+	personal_id?: PersonalInformation['personal_id'];
 	vehicleChosen?: VehiclePassenger;
-	rangePrice?:number;
+	vehicletype_id?: string;
 }
 
-interface VehiclePassenger {
+export interface VehiclePassenger {
 	owner_name: string;
 	plate_number: string;
-	vehicle_id: string;
+	vehicletype_id: string;
 }
 
 
 
 
-type PassegerForms = {
-   isSubmitted:boolean,
-    seniorPwdPassenger: Passenger[];
-    studentPassengers: Passenger[];
-    childPassengers: Passenger[];
-    regularPassengers: Passenger[];
-    infantPassengers: Passenger[];
-}
+export type PassegerForms = {
+	isSubmitted: boolean;
+	seniorPassenger: Passenger[];
+	pwdPassenger: Passenger[];
+	studentPassengers: Passenger[];
+	childPassengers: Passenger[];
+	regularPassengers: Passenger[];
+	infantPassengers: Passenger[];
+};
 
 
 
 const initialState: PassegerForms = {
   isSubmitted:false,
-  seniorPwdPassenger: [],
+  seniorPassenger: [],
+  pwdPassenger:[],
   studentPassengers: [],
   childPassengers: [],
   regularPassengers: [],
@@ -55,7 +58,12 @@ const passengerFormSlice = createSlice({
     storePassengerForm : (_state,action:PayloadAction<PassegerForms>) =>{
         return action.payload;
     }
-  }
+  },
+	 extraReducers: (builder) => {
+    builder.addCase(PURGE, () => {
+      return initialState; // Reset the slice state to its initial state
+    });
+  },
 });
 
 

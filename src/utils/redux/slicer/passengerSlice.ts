@@ -1,4 +1,5 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { PURGE } from "redux-persist";
 
 export type NumberOfPassenger = {
 	totalCount: number;
@@ -7,6 +8,7 @@ export type NumberOfPassenger = {
 	regular: number;
 	child: number;
 	infant: number;
+	pwd:number;
 	passengerClass?: PassengerClass;
 	
 };
@@ -22,6 +24,7 @@ const initialState: NumberOfPassenger = {
 	regular: 0,
 	child: 0,
 	infant: 0,
+	pwd:0,
 };
 
 
@@ -32,6 +35,11 @@ const passengerSlice = createSlice({
 		storePassengerNumber: (_state, action: PayloadAction<NumberOfPassenger>) => {
 			return action.payload;
 		},
+	},
+	extraReducers: (builder) => {
+		builder.addCase(PURGE, () => {
+			return initialState; // Reset the slice state to its initial state
+		});
 	},
 });
 

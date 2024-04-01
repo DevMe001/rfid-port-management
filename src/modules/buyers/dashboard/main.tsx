@@ -8,7 +8,7 @@ import { RootState, useAppSelector } from '../../../utils/redux/store';
 import { Button, Label, TextInput, Datepicker } from 'flowbite-react';
 import { FaSave, FaRegUserCircle } from 'react-icons/fa';
 import { BiRfid } from 'react-icons/bi';
-import { Formik, Form, ErrorMessage, FieldProps,Field } from 'formik';
+import { Formik, Form, ErrorMessage, FieldProps,Field, FormikProps } from 'formik';
 import * as Yup from 'yup';
 import { useAddPersonalDetailsMutation, useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import { enqueueSnackbar } from 'notistack';
@@ -18,6 +18,7 @@ import { IUser } from '../../../utils/redux/slicer/authSlice';
 import Immutable from '../../../immutable/constant';
 import moment from 'moment';
 import displayFullName from '../../../utils';
+import dayjs from 'dayjs';
 
 const listOrders = [
 	{
@@ -52,21 +53,23 @@ interface FormData {
 	address: string;
 	mobileNumber: number;
 	account_id: string;
+	postal_code?: number;
 }
 
 
 const personalInfromationSchema = Yup.object().shape({
 	fullname: Yup.string().required('Full name is required'),
 	age: Yup.number().required('Age is required').min(18, 'Minor is not allowed'),
-	birthdate: Yup.date()
-		.nullable()
-		.required('Birthdate is required'),
+	birthdate: Yup.date().nullable().required('Birthdate is required'),
 	gender: Yup.string().oneOf(['male', 'female']).required('Gender is required'),
 	nationality: Yup.string().required('Nationality is required'),
 	address: Yup.string().required('Address is required'),
-	mobileNumber: Yup.number().required('Mobile number is required').min(11,'Mobile number required 11 digits'),
+	mobileNumber: Yup.number().required('Mobile number is required').min(11, 'Mobile number required 11 digits'),
 	status: Yup.string(),
 	account_id: Yup.string(),
+	postal_code: Yup.number()
+		.required('Postal is required')
+		.test('len', 'Postal code must be exactly 4 digits', (val) => val.toString().length === 4),
 });
 
 
@@ -182,19 +185,37 @@ const onFileUpload = async(e: React.ChangeEvent<HTMLInputElement>) => {
 
 
 
+const dateNow = dayjs().format('YYYY-DD-MM');
 
 
 const initialValues: FormData = {
 	fullname: displayFullName(getProfileDetails?.firstname, getProfileDetails?.midlename, getProfileDetails?.lastname) ?? '',
 	age: getProfileDetails?.age ?? 0,
-	birthdate: moment(getProfileDetails?.birthdate).format('MMMM DD YYYY') ?? new Date(),
+	birthdate: dayjs(getProfileDetails?.birthdate).format('YYYY-DD-MM') ?? dateNow,
 	gender: getProfileDetails?.gender ?? '',
 	nationality: getProfileDetails?.nationality ?? '',
 	address: getProfileDetails?.address ?? '',
 	mobileNumber: Number(getProfileDetails?.mobileNumber) ?? 0,
 	account_id: getProfileUser?.account_id ?? '',
+	postal_code: Number(getProfileDetails?.postal_code) ?? '',
 };
 
+const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEvent<HTMLInputElement>, formikProps: FieldProps<any>) => {
+	let value = '';
+
+	if ('currentTarget' in e) {
+		value = (e.currentTarget as HTMLInputElement).value;
+	}
+
+	let chosenYear = new Date(value).getFullYear();
+	let currentYear = new Date().getFullYear();
+	let dateDiff = Math.abs(currentYear - chosenYear);
+
+	console.log(value,'get value');
+
+	formikProps.form.setFieldValue('birthdate', value);
+	formikProps.form.setFieldValue('age', dateDiff);
+};
 
 
 
@@ -285,7 +306,10 @@ const initialValues: FormData = {
 													</div>
 												</RenderIf>
 												<RenderIf value={isEmpty(preview) && isEmpty(getProfileUser?.photo as string)}>
-													r<div className='uppercase bg-accent rounded-full py-1 px-3 w-[8rem] h-[8rem] flex justify-center items-center text-white text-3xl'>{user.displayName.slice(0, 1)}</div>
+													<div className='uppercase bg-lite rounded-full py-1 px-3 w-[8rem] h-[8rem] flex justify-center items-center text-white text-3xl'>
+														{/* {user.displayName.slice(0, 1)} */}
+														<img className='w-[3rem] h-[3rem] rounded-full' src={user.picture} alt={user.picture} />
+													</div>
 												</RenderIf>
 											</label>
 											<div className='block'>
@@ -337,7 +361,7 @@ const initialValues: FormData = {
 												<div className='block'>
 													<Label className='text-navy' htmlFor='age' value='Age' />
 												</div>
-												<Field name='age'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} name='age' color='info' id='age' type='number' />}</Field>
+												<Field readonly name='age'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} name='age' color='info' id='age' type='number' />}</Field>
 
 												<ErrorMessage
 													name='age'
@@ -369,7 +393,8 @@ const initialValues: FormData = {
 												<div className='block'>
 													<Label className='text-navy' htmlFor='birthdate' value='Birthdate' />
 												</div>
-												<Field name='birthdate'>{(fieldProps: FieldProps) => <Datepicker {...fieldProps.field} selected={fieldProps.field.value} onChange={(date: Date) => fieldProps.form.setFieldValue('birthdate', date)} color='info' id='birthdate' required />}</Field>
+												<Field name='birthdate'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} onChange={(e) => onDateSetRetrival(e, fieldProps)} name='birthdate' color='info' id='age' type='date' />}</Field>
+
 												<ErrorMessage
 													name='birthdate'
 													render={(msg) => (
@@ -430,6 +455,21 @@ const initialValues: FormData = {
 												<Field name='address'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} color='info' id='address' type='text' placeholder='Street,Purok,Brgy,Town' required />}</Field>
 												<ErrorMessage
 													name='address'
+													render={(msg) => (
+														<div style={{ color: '#f10000' }} className='error'>
+															{msg}
+														</div>
+													)}
+												/>
+											</div>
+
+											<div>
+												<div className='block'>
+													<Label className='text-navy' htmlFor='postal' value='Postal code' />
+												</div>
+												<Field name='postal_code'>{(fieldProps: FieldProps) => <TextInput type='number' {...fieldProps.field} color='info' id='postal' placeholder='4023' required />}</Field>
+												<ErrorMessage
+													name='postal_code'
 													render={(msg) => (
 														<div style={{ color: '#f10000' }} className='error'>
 															{msg}

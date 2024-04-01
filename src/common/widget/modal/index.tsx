@@ -77,8 +77,9 @@ const navigate = useNavigate();
 						</div>
 					</RenderIf>
 					<RenderIf value={isEmpty(getProfileUser?.photo as unknown as string) || isUndefined(getProfileUser)}>
-						<div className='uppercase bg-accent rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center' onClick={onBoxDisplay}>
-							{users.displayName.slice(0, 1)}
+						<div className='uppercase bg-lite rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center' onClick={onBoxDisplay}>
+							<img className='w-[3rem] h-[2rem] rounded-full' src={users.picture} alt={users.picture} />
+							{/* {users.displayName.slice(0, 1)} */}
 						</div>
 					</RenderIf>
 					<RenderIf value={boxAuth}>
@@ -91,8 +92,9 @@ const navigate = useNavigate();
 									</div>
 								</RenderIf>
 								<RenderIf value={isEmpty(getProfileUser?.photo as unknown as string) || isUndefined(getProfileUser)}>
-									<div className='uppercase bg-accent rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center' onClick={() => onRoutePath('profile')}>
-										{users.displayName.slice(0, 1)}
+									<div className='uppercase bg-lite rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center' onClick={() => onRoutePath('profile')}>
+										{/* {users.displayName.slice(0, 1)} */}
+										<img className='w-[3rem] h-[2rem]' src={users.picture} alt={users.picture} />
 									</div>
 								</RenderIf>
 							</div>

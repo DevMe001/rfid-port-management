@@ -10,7 +10,7 @@ import '../styles/book-list.css';
 import { GiCargoShip } from "react-icons/gi";
 import useToggleAuth from '../../../utils/hooks/useToggleAuth';
 import { RootState, useAppDispatch, useAppSelector } from '../../../utils/redux/store';
-import { onToggleBookingModal, useSelectIndex } from '../../../utils/hooks/globa.state';
+import { onToggleBookingModal, useGlobaLoader, useSelectIndex } from '../../../utils/hooks/globa.state';
 import PopupModal from '../../../common/widget/modal/popup.,modal';
 
 import { PiUsersThreeFill } from 'react-icons/pi';
@@ -20,6 +20,7 @@ import PassengerMenuList from './components/dropdown-passenger-list';
 import CustomButton from '../../../common/components/ui/button.componetnt';
 import dateArrival from '../../../utils/dateFormat';
 import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
+import LoaderSpinner from '../../../common/widget/loader';
 
 
 interface PassengerType{
@@ -28,6 +29,7 @@ interface PassengerType{
 	student: number;
 	child: number;
 	infant: number;
+	pwd:number;
 	
 }
 const initialPassengerClass: PassengerType = {
@@ -36,6 +38,7 @@ const initialPassengerClass: PassengerType = {
 	student: 0,
 	child: 0,
 	infant: 0,
+	pwd:0
 };
 
 interface FareClass {
@@ -46,6 +49,8 @@ interface FareClass {
 const BookingRecentList: React.FC = () => {
 	// const { data, isError } = useGetBookignScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 	const authUser = useAppSelector((state:RootState) => state.authUser);
+
+	const [loader,setLoader] = useGlobaLoader();
 
 
 	
@@ -58,7 +63,7 @@ const BookingRecentList: React.FC = () => {
 	const [bookingModal, setBookingModal] = onToggleBookingModal();
 	const [selected, setSelected] = useState<BookingSchedules | Record<string, any>>({});
 	const [dropdown, setDropdown] = useState<boolean>(false);
-	const [{ senior, regular, student, child, infant }, setCounters] = useState<PassengerType>(initialPassengerClass);
+	const [{ senior, regular, student, child, infant,pwd }, setCounters] = useState<PassengerType>(initialPassengerClass);
 	const [,setSelectedIndex] = useSelectIndex();
 
 	const [{ isActiveError, fare_type }, setFareClass] = useState<FareClass>({
@@ -67,10 +72,16 @@ const BookingRecentList: React.FC = () => {
 	});
 
 	useEffect(() => {
-		if (isError || isPersonalInformationError) {
+		async function init(){
+			if (isError || isPersonalInformationError) {
+			setLoader(true);
 			enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
+			await waitSec(3000);
+			setLoader(false);
 			navigate('/');
 		}
+		}
+		init();
 	}, [isError]);
 
 	const onBooking = (schedule: BookingSchedules) => {
@@ -117,7 +128,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 				} else {
 					incrementValue = 0; // No increment allowed beyond 4
 				}
-			} else if (type === 'senior') {
+			} else if (type === 'senior' || type === 'pwd') {
 				if (prevCounters[type] >= 0 && prevCounters[type] < 7) {
 					incrementValue = 1; // Increment allowed for adult, less than 7
 				} else {
@@ -146,15 +157,21 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 		}));
 	};
 
-	let totalPassenger = senior + student + regular + child + infant;
+	let totalPassenger = senior + student + regular + child + infant + pwd;
 
 	const dispatch = useAppDispatch();
 
 	const onRouteBookingById = async(id: string) => {
 
 		try {
-			console.log(getPersonalByInformation);
+			
 			if (!isNull(getPersonalByInformation)){
+
+						setLoader(true);
+
+						await waitSec(3000);
+						setLoader(false);
+				
 					if (totalPassenger > 0) navigate(`/booking/${id}`);
 
 					if (isEmpty(fare_type)) {
@@ -163,13 +180,18 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 						setFareClass({ isActiveError: false });
 					}
 
-				dispatch(storePassengerNumber({ totalCount: totalPassenger, senior: senior, student: student, regular: regular, child: child, infant: infant, passengerClass: fare_type }));
+				dispatch(storePassengerNumber({ totalCount: totalPassenger, senior: senior, student: student, regular: regular, child: child, infant: infant,pwd:pwd, passengerClass: fare_type }));
 			} else{
 
 				enqueueSnackbar('Complete information first', { variant: 'warning', autoHideDuration: 3000 });
 
-				await waitSec(2000);
+				setLoader(true);
+					
+			
+				await waitSec(3000);
+				setLoader(false);
 				setSelectedIndex(2);
+		
 				navigate('/user-dashboard');
 			}
 
@@ -197,39 +219,35 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 					<hr className='borderGray mt-2' />
 					{!isEmpty(data) &&
 						data?.map((schedule: BookingSchedules) => (
-							
-								<div key={schedule.schedule_id} className='relative flex justify-between gap-1 border border-1 border-gray-200 my-4 bg-white p-5 rounded-md'>
-									<div className='flex flex-col gap-2 indicator w-full px-4'>
-										<div className='flex justify-between items-start mb-2'>
-											<p className='ml-5'>Arrival date:</p>
-											<p className='ml-5'> {dateArrival(schedule.arrival_date)}</p>
-										</div>
-										<div className='route flex justify-between items-center pl-5 leading-6 w-9/12 route h-full mx-auto'>
-											<i id='routeA'>
-												<GiCargoShip fontSize={40} />
-											</i>
-											<label htmlFor='routeA' className='font-medium'>
-												{schedule.origin}
-											</label>
-											<label className='font-bold text-xl text-navy'>-</label>
-											<label className='font-medium' htmlFor='routeB'>
-												{schedule.destination}
-											</label>
-											<i id='routeB'>
-												<GiCargoShip fontSize={40} style={{ transform: 'scaleX(-1)' }} />
-											</i>
-										</div>
+							<div key={schedule.schedule_id} className='relative flex justify-between gap-1 border border-1 border-gray-200 my-4 bg-white p-5 rounded-md'>
+								<div className='flex flex-col gap-2 indicator w-full px-4'>
+									<div className='flex justify-between items-start mb-2'>
+										<p className='ml-5'>Arrival date:</p>
+										<p className='ml-5'> {dateArrival(schedule.arrival_date)}</p>
 									</div>
-									<div className='flex flex-col justify-center items-center w-3/12 gap-5'>
-										<a target='blank' href={`${Immutable.API}/vehicle?photo=${schedule.vehicle.vehicle_id}`}>
-											<img src={`${Immutable.API}/vehicle?photo=${schedule.vehicle.vehicle_id}`} className='max-w-full' />
-										</a>
-										<CustomButton label={'Book Now'} className='btn bg-accent text-white text-sm' onClick={() => onBooking(schedule)} />
-							
-										
+									<div className='route flex justify-between items-center pl-5 leading-6 w-9/12 route h-full mx-auto'>
+										<i id='routeA'>
+											<GiCargoShip fontSize={40} />
+										</i>
+										<label htmlFor='routeA' className='font-medium'>
+											{schedule.origin}
+										</label>
+										<label className='font-bold text-xl text-navy'>-</label>
+										<label className='font-medium' htmlFor='routeB'>
+											{schedule.destination}
+										</label>
+										<i id='routeB'>
+											<GiCargoShip fontSize={40} style={{ transform: 'scaleX(-1)' }} />
+										</i>
 									</div>
 								</div>
-							
+								<div className='flex flex-col justify-center items-center w-3/12 gap-5'>
+									<a target='blank' href={`${Immutable.API}/vehicle?photo=${schedule.vehicle.vehicle_id}`}>
+										<img src={`${Immutable.API}/vehicle?photo=${schedule.vehicle.vehicle_id}`} className='max-w-full' />
+									</a>
+									<CustomButton label={'Book Now'} className='btn bg-accent text-white text-sm' onClick={() => onBooking(schedule)} />
+								</div>
+							</div>
 						))}
 					<RenderIf value={bookingModal == true}>
 						<PopupModal>
@@ -263,10 +281,11 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 									</p>
 								</div>
 								<RenderIf value={dropdown}>
-									<div onMouseLeave={() => setDropdown(false)} className='w-[20rem] h-[8rem] text-navy borderLite cursor-pointer animate-slideDown px-5 py-2'>
+									<div onMouseLeave={() => setDropdown(false)} className='w-[20rem] h-[10rem] text-navy borderLite cursor-pointer animate-slideDown px-5 py-2'>
 										{/* adults */}
 
-										<PassengerMenuList label='Senior/Pwd' count={senior} onIncrement={() => increment('senior')} onDecrement={() => decrement('senior')} />
+										<PassengerMenuList label='Senior' count={senior} onIncrement={() => increment('senior')} onDecrement={() => decrement('senior')} />
+										<PassengerMenuList label='Pwd' count={pwd} onIncrement={() => increment('pwd')} onDecrement={() => decrement('pwd')} />
 
 										<PassengerMenuList label='Student' count={student} onIncrement={() => increment('student')} onDecrement={() => decrement('student')} />
 
@@ -277,8 +296,8 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 										<PassengerMenuList label='Infant' count={infant} onIncrement={() => increment('infant')} onDecrement={() => decrement('infant')} />
 									</div>
 								</RenderIf>
-								<div className='flex justify-center my-5'>
-									<button className='btn bg-accent text-white text-sm' onClick={() => onRouteBookingById(selected.schedule_id)}>
+								<div className='flex justify-center items-center my-5'>
+									<button className='btn bg-accent text-white text-sm text-center' onClick={() => onRouteBookingById(selected.schedule_id)}>
 										Proceed
 									</button>
 								</div>
@@ -288,8 +307,14 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 				</div>
 			</RenderIf>
 			<RenderIf value={isEmpty(data)}>
-				<p>No booking available</p>
+				<div className='w-full h-auto flex justify-center items-center mt-20'>
+					<div className='flex justify-center items-center w-[70%] h-[10rem] shadow-md rounded border border-1 border-teal-500'>
+						<p className='text-red-500'>No booking available</p>
+					</div>
+				</div>
 			</RenderIf>
+
+			<LoaderSpinner load={loader}/>
 		</>
 	);
 };

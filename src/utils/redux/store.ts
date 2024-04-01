@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { TypedUseSelectorHook } from 'react-redux';
 import { combineReducers } from "redux";
 import logger from 'redux-logger';
-import {FLUSH, PAUSE, PERSIST, Persistor, REGISTER, REHYDRATE, persistReducer, persistStore} from 'redux-persist';
+import {FLUSH, PAUSE, PERSIST, PURGE, Persistor, REGISTER, REHYDRATE, persistReducer, persistStore} from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { authService } from '../../api-query/auth-api';
 import authReducers from './slicer/authSlice';
@@ -13,6 +13,8 @@ import passengerReducers from './slicer/passengerSlice';
 import passengerformSlice from './slicer/passengerformSlice';
 import { personalInformationService } from '../../api-query/personal-details.api';
 import { accountProfileServices } from '../../api-query/account-api';
+import { paymentService } from '../../api-query/payment-api';
+import  paymentReducers from './slicer/paymentSlice';
 
 
 // creates reducers
@@ -24,8 +26,14 @@ const rootReducers = combineReducers({
 	countPassenger: passengerReducers,
 	passengerFormDetails: passengerformSlice,
 	[personalInformationService.reducerPath]: personalInformationService.reducer,
-    [accountProfileServices.reducerPath]:accountProfileServices.reducer
+	[accountProfileServices.reducerPath]: accountProfileServices.reducer,
+	[paymentService.reducerPath]: paymentService.reducer,
+	paymentProcess: paymentReducers,
 });
+
+
+
+
 // create persistor key
 const peristorConfig = {
     key:'port-management',
@@ -46,7 +54,8 @@ const store = configureStore({
                 REHYDRATE,
                 PAUSE,
                 PERSIST,
-                REGISTER
+                REGISTER,
+                PURGE
             ]
         }
     }).concat(
@@ -55,6 +64,7 @@ const store = configureStore({
         scheduleService.middleware,
         personalInformationService.middleware,
         accountProfileServices.middleware,
+        paymentService.middleware,
         logger
     ),
     devTools:process.env.NODE_ENV != 'production'

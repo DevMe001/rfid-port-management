@@ -9,6 +9,7 @@ import HomePage from '../modules/onboarding-flow/homepage';
 import BuyerDashboard from '../modules/buyers/dashboard/user-dashboard';
 import BuyerBooking from '../modules/buyers/booking';
 import BuyerBookingById from '../modules/buyers/addbooking';
+import Payment from '../modules/buyers/payment';
 
 
 const LoginwithSnackbar = withSnackbar(Login);
@@ -16,6 +17,9 @@ const HomewithSnachbard = withSnackbar(HomePage);
 const BuyerDashboardwithSnachbard = withSnackbar(BuyerDashboard);
 const BuyerBookingwithSnackbar = withSnackbar(BuyerBooking);
 const BuyerBookingByIdwithSnackbar = withSnackbar(BuyerBookingById);
+const PaymentwithSnackbar = withSnackbar(Payment);
+
+
 
 
 const Router = createBrowserRouter([
@@ -37,6 +41,14 @@ const Router = createBrowserRouter([
 			{
 				path: '/booking/:bookId',
 				element: <BuyerBookingByIdwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />,
+			},
+			{
+				path: '/booking/:bookId/payment',
+				element: (
+					<PrivateRoute>
+						<PaymentwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />
+					</PrivateRoute>
+				),
 			},
 			{
 				path: '/booking',
