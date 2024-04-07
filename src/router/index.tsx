@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import ErrorPage from '../common/components/error-page';
 import Login from '../modules/onboarding-flow/login.module';
-import Dasboard from '../modules/dashboard';
+import Dasboard from '../modules/admin/dashboard';
 import withSnackbar from '../common/components/notistack';
 import PrivateRoute from './private/protected-route';
 import PublicRoute from './public';
@@ -33,7 +33,7 @@ const Router = createBrowserRouter([
 			{
 				path: '/login',
 				element: (
-					<PublicRoute url={'/dashboard'}>
+					<PublicRoute url={'/admin-dasboard'}>
 						<LoginwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />
 					</PublicRoute>
 				),
@@ -63,7 +63,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/dashboard',
+				path: '/admin-dasboard',
 				element: (
 					<PrivateRoute>
 						<Dasboard />

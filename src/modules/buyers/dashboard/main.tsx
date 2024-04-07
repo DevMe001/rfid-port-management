@@ -254,7 +254,7 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 									<h5>
 										Hello, <span className='font-medium'>{user.displayName}</span>
 									</h5>
-									<p className='m-0 leading-6'>From your account dashboard. you can easily check & view your recent orders, manage your shipping and billing addresses and edit your password and account details.</p>
+									<p className='m-0 leading-6'>Introducing our RFID e-wallet solution, your hassle-free way to make transactions on the go. Simply tap your RFID-enabled device to pay securely and swiftly. Track your spending, reload funds, and enjoy the convenience of contactless payments with ease.</p>
 								</div>
 								<div className='grid grid-cols-2 w-[90%] mx-auto'>
 									<div>
@@ -361,7 +361,9 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 												<div className='block'>
 													<Label className='text-navy' htmlFor='age' value='Age' />
 												</div>
-												<Field readonly name='age'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} name='age' color='info' id='age' type='number' />}</Field>
+												<Field readonly name='age'>
+													{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} name='age' color='info' id='age' type='number' />}
+												</Field>
 
 												<ErrorMessage
 													name='age'

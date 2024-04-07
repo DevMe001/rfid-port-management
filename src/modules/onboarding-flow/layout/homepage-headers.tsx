@@ -6,12 +6,18 @@ import AuthModal from '../../../common/widget/modal';
 import { onToggleNavHomepageMobile } from '../../../utils/hooks/globa.state';
 import Logo from '../../../assets/home/logo.png';
 import useToggleAuth from '../../../utils/hooks/useToggleAuth';
+import { RootState, useAppSelector } from '../../../utils/redux/store';
+
+import { isEmpty } from 'lodash';
+import { MessageNotificationUserBox } from '../../../common/components/ui/main.ui.component';
 
 
 
 const Headers: React.FC = () => {
 	const [toggle, setToggle] = onToggleNavHomepageMobile();
 	const { onOpen } = useToggleAuth();
+	
+	const user = useAppSelector((state:RootState) => state.authUser);
 
 	const onNavigationMobileShow = useCallback(() => {
 		setToggle(!toggle);
@@ -29,7 +35,7 @@ const Headers: React.FC = () => {
 
 						{/* desktop view navigation */}
 						<nav className='hidden md:block'>
-							<ul className='flex justify-between items-center gap-4 px-10 text-lite font-medium text-xl cursor-pointer'>
+							<ul className='flex justify-between items-center gap-10 px-10 text-lite font-medium text-xl cursor-pointer'>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
 									<a className='hover:text-white' href='/'>
 										HOME
@@ -40,13 +46,19 @@ const Headers: React.FC = () => {
 										BOOK
 									</a>
 								</li>
-								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
-									<a className='hover:text-white' href='/user-dashboard'>
-										DASHBOARD
-									</a>
-								</li>
+								{!isEmpty(user.accessToken) && (
+									<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
+										<a className='hover:text-white' href='/user-dashboard'>
+											DASHBOARD
+										</a>
+									</li>
+								)}
+
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>ABOUT US</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>CONTACT US</li>
+								<li>
+									<MessageNotificationUserBox />
+								</li>
 								<li>
 									<AuthModal label='login' onOpen={onOpen}>
 										<div className='flex flex-col justify-center items-center gap-1'>

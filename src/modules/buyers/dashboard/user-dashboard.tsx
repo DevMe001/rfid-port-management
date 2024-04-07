@@ -1,5 +1,6 @@
 import Footer from '../../onboarding-flow/layout/homepage-footer-md';
 import Headers from '../../onboarding-flow/layout/homepage-headers';
+import Chatbot from '../chatbot';
 import DashboardUser from './main';
 
 const BuyerDashboard = () => {
@@ -8,6 +9,7 @@ const BuyerDashboard = () => {
 			<Headers />
 			<DashboardUser />
 			<Footer />
+			<Chatbot />
 		</div>
 	);
 }

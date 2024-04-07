@@ -1,0 +1,503 @@
+import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { SiChatbot } from 'react-icons/si';
+import { useChatOnPoint, useChatToggle } from '../../../utils/hooks/globa.state';
+import RenderIf from '../../../common/components/ui/render-if';
+import clsx from 'clsx';
+import { IoCloseCircleSharp } from 'react-icons/io5';
+import { IoMdSend } from 'react-icons/io';
+import moment from 'moment';
+import { RootState, useAppDispatch, useAppSelector } from '../../../utils/redux/store';
+import useToggleAuth from '../../../utils/hooks/useToggleAuth';
+import { isEmpty } from 'lodash';
+import { storeChat } from '../../../utils/redux/slicer/chatSlice';
+import { useGetChatMessageMutation } from '../../../api-query/chat-api';
+
+import { io } from 'socket.io-client';
+import Immutable from '../../../immutable/constant';
+import { IUser } from '../../../utils/redux/slicer/authSlice';
+
+type Message={
+	userId?:string;
+	identity:string;
+	type:string;
+	message:string;
+	action:string;
+}
+	// const userBubbleMessage: Message[] = [
+	// 	{
+	// 		identity: 'Bot',
+	// 		type: 'user',
+	// 		message: 'how are you',
+	// 		action: 'sender',
+	// 	},
+	// 	{
+	// 		identity: 'Ramon',
+	// 		type: 'bot',
+	// 		message: 'Same to you as well',
+	// 		action: 'receiver',
+	// 	},
+	// 	{
+	// 		identity: 'Bot',
+	// 		type: 'bot',
+	// 		message: 'Thanks',
+	// 		action: 'sender',
+	// 	},
+	// 	{
+	// 		identity: 'Ramon',
+	// 		type: 'bot',
+	// 		message: 'See yah',
+	// 		action: 'receiver',
+	// 	},
+	// 	{
+	// 		identity: 'Bot',
+	// 		type: 'user',
+	// 		message: 'Yes ask me anythinh',
+	// 		action: 'sender',
+	// 	},
+	// ];
+
+const socket = io(Immutable.API); // Replace with your server URL
+
+
+const Chatbot:React.FC = () => {
+	const [toggle, setToggle] = useChatToggle();
+	const [active, setActive] = useState<boolean>(false);
+
+
+
+	// user message
+
+	const [userMessage, setUserMessage] = useState<Message[]>([]);
+
+
+	// admin
+
+	const [adminMessage, setAdminMessage] = useState<Message[]>([]);
+
+
+
+
+
+	const user = useAppSelector((state: RootState) => state.authUser);
+	const chatStatus = useAppSelector((state:RootState)=> state.chatMsg);
+	const { onOpen } = useToggleAuth();
+	const [, setChatTouch] = useChatOnPoint();
+	const dispatch = useAppDispatch();
+	const [inputMsg, setInputMsg] = useState<string>('');
+	const chatToggle = useAppSelector((state: RootState) => state.chatMsg);
+	const [getChatMessage] = useGetChatMessageMutation();
+
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	const adminRef = useRef<HTMLDivElement>(null);
+
+
+	let id = user.id as string;
+	
+useEffect(() => {
+
+	if(socket){
+			socket.emit('joinuser', id);
+
+			socket.off('admin message');
+			// Attach new event listener for admin replies
+			socket.on('admin message', (adminReply) => {
+			
+				console.log('Received admin reply:', adminReply.message);
+
+
+					const createMessagetoSender = {
+						userId: adminReply.message.userId,
+						identity: adminReply.message.identity,
+						type: adminReply.message.type,
+						message: adminReply.message.message,
+						action: 'sender',
+					};
+
+				//  setToggle(true);
+
+
+			setUserMessage((prev) => [...prev, createMessagetoSender]);
+
+
+			});
+	}
+
+	return () => {
+		// Clean up event listener when component unmounts
+		socket.off('joinuser');
+		socket.off('admin message');
+	};
+}, [socket]);
+
+
+
+		useEffect(() => {
+			// Listen for 'get' event from the server
+			socket.emit('join');
+
+			// Clean up existing event listener
+			socket.off('private message');
+
+			// Attach new event listener
+			socket.on('private message', (receivedMessages) => {
+		
+					setToggle(true);
+
+					setAdminMessage((prev) => [...prev, receivedMessages.message]);
+
+					dispatch(storeChat({ connectAdmin: true }));
+
+				
+
+					// socket.emit('adminResponse', createMessagetoSender);
+			});
+
+		
+
+			return () => {
+				// Clean up event listener when component unmounts
+				  socket.off('join');
+					socket.off('private message');
+			};
+		}, []);
+
+
+		// user side
+
+useEffect(()=>{
+
+	socket.emit('joinConversation', { user_id: id });
+	socket.on('getUserInsideRoom', (res) => {
+		console.log(res);
+	});
+
+
+		socket.on('conversation', (res) => {
+			console.log(res);
+		});
+
+	return ()=>{
+		socket.off('getUserInsideRoom');
+		socket.off('conversation');
+		socket.off('joinConversation');
+	}
+
+},[socket])
+
+
+
+
+
+	useEffect(() => {
+		if (chatToggle.onActive) {
+			setToggle(true);
+		} else {
+			setToggle(false);
+		}
+	}, []);
+
+	const onChatOpen = useCallback(() => {
+		if (isEmpty(user.accessToken)) {
+			onOpen();
+			dispatch(storeChat({ urlPath: '/', onActive: true }));
+		} else {
+	 		dispatch(storeChat({ connectAdmin: false}));
+			setToggle(true);
+		}
+	}, []);
+
+	const onActiceFocus = () => {
+		setActive(true);
+	};
+
+	const onInputMessage = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setInputMsg(e.target.value);
+	}, []);
+
+	const scrollToBottom = () => {
+		if (containerRef.current) {
+			const container = containerRef.current;
+			const scrollHeightBefore = container.scrollHeight;
+			container.scrollTop = scrollHeightBefore;
+
+			// Delay the scroll operation slightly to ensure the new message is fully rendered
+			setTimeout(() => {
+				const scrollHeightAfter = container.scrollHeight;
+				if (scrollHeightAfter > scrollHeightBefore) {
+					container.scrollTop = scrollHeightAfter;
+				}
+			}, 100);
+		}
+
+				if (adminRef.current) {
+					const containerRef = adminRef.current;
+					const scrollHeightBefore = containerRef.scrollHeight;
+					containerRef.scrollTop = scrollHeightBefore;
+
+					// Delay the scroll operation slightly to ensure the new message is fully rendered
+					setTimeout(() => {
+						const scrollHeightAfter = containerRef.scrollHeight;
+						if (scrollHeightAfter > scrollHeightBefore) {
+							containerRef.scrollTop = scrollHeightAfter;
+						}
+					}, 100);
+				}
+	};
+
+
+
+
+
+	const onKeyInputMsg = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.key === 'Enter' && !isEmpty(inputMsg)) {
+			onPushMsg();
+			setInputMsg('');
+		}
+	};
+
+
+
+	const ontTestMsg = ()=>{
+			const createMessagetoReceiver = {
+				userId: user.id,
+				identity: user.displayName,
+				type: 'user',
+				message: inputMsg,
+				action: 'sender',
+			};
+
+			socket.emit('userAdminConversation', createMessagetoReceiver);
+
+			// socket.emit('joinConversation', { user_id: id });
+	}
+
+
+
+	const onPushMsg = useCallback(async () => {
+		const getAnswertoQuestion = await getChatMessage({ answer: inputMsg });
+
+
+		if (!isEmpty(getAnswertoQuestion) && 'data' in getAnswertoQuestion) {
+
+			const answer = getAnswertoQuestion?.data?.answer as string;
+
+
+			if (answer.includes('Ok will direct you to admin') || answer.includes('Sure admin will reply please wait for a few minutes') || answer.includes('Hold on a second admin saw your reply') && user.role !== 1) {
+				console.log('emitted agent');
+
+				// Clean up existing event listener
+				socket.off('privateMessage');
+
+	
+
+				if (!chatStatus.connectAdmin){
+								const createMessagetoReceiver = {
+									userId: user.id,
+									identity: user.displayName,
+									type: 'user',
+									message: `Hi admin user ${user.displayName} might need your assistance`,
+									action: 'sender',
+								};
+
+								// Emit the privateMessage event to the server
+								socket.emit('privateMessage', createMessagetoReceiver);
+								dispatch(storeChat({ connectAdmin: true }));
+
+
+					
+				}
+		}
+
+				if (chatStatus.connectAdmin && user.role === 1) {
+
+
+					setAdminMessage((prev) => [
+						...prev,
+						{
+							identity: user.displayName,
+							type: 'admin',
+							message: inputMsg,
+							action: 'receiver',
+						},
+					]);
+
+
+
+					const createMessage = {
+						userId: user.id,
+						identity: user.displayName,
+						type: 'admin',
+						message: inputMsg,
+						action: 'sender',
+					};
+
+					socket.emit('adminResponse', createMessage);
+
+			
+				} 
+				if (user.role === 0 && chatStatus.connectAdmin) {
+						setUserMessage((prev) => [
+							...prev,
+							{
+								identity: user.displayName,
+								type: 'user',
+								message: inputMsg,
+								action: 'receiver',
+							},
+						]);
+
+							const createMessage = {
+								userId: user.id,
+								identity: user.displayName,
+								type: 'admin',
+								message: inputMsg,
+								action: 'sender',
+							};
+
+					socket.emit('privateMessage', createMessage);
+
+				}
+				
+				else {
+
+					
+					
+					if (user.role === 0 && !chatStatus.connectAdmin) {
+						setUserMessage((prev) => [
+							...prev,
+							{
+								id:'0',
+								identity: 'Bot',
+								type: 'bot',
+								message: getAnswertoQuestion?.data?.answer as string,
+								action: 'sender',
+							},
+						]);
+					}
+				
+
+						setUserMessage((prev) => [
+							...prev,
+							{
+								userId:id,
+								identity: user.displayName,
+								type: 'user',
+								message: inputMsg,
+								action: 'receiver',
+							},
+						]);
+
+				
+				}
+			
+		}
+
+			setInputMsg('');
+		
+
+
+		scrollToBottom(); // Scroll to the bottom when a new message is pushed
+	}, [inputMsg, user.displayName]);
+
+	const onCloseChatMsg = useCallback(() => {
+		dispatch(storeChat({ urlPath: '/user-dashboard', onActive: false }));
+		setToggle(false);
+		dispatch(storeChat({ connectAdmin: false,onActive:false }));
+
+	}, []);
+
+	const currentTime = moment().format('ddd [at] h:mma');
+
+	return (
+		<>
+			<RenderIf value={!toggle}>
+				<div className='fixed bottom-10 right-10 w-[20] h-[20] bg-white p-3 rounded-full shadow-md border border-1 border-gray-200 cursor-pointer' onClick={onChatOpen}>
+					<SiChatbot size={60} className='relative text-accent animate-move' />
+				</div>
+			</RenderIf>
+			<RenderIf value={toggle}>
+				<div
+					onClick={onChatOpen}
+					className={clsx('fixed bottom-0 right-5 w-[20rem] h-[25rem] bg-white p-3 shadow-md border border-1 border-gray-200 cursor-pointer', {
+						'animate-slideDown': toggle,
+					})}
+				>
+					<div onClick={(e) => e.stopPropagation()} className='flex flex-col h-full justify-between'>
+						<div className='flex justify-between'>
+							<p className='text-xl font-medium text-navy'>Message</p>
+							<p>
+								<IoCloseCircleSharp onClick={onCloseChatMsg} size={30} className='text-accent' />
+							</p>
+						</div>
+						<RenderIf value={user.role === 1}>
+							<div ref={adminRef} className='h-full bg-gray-100 max-h-[17.5rem] = rounded overflow-y-auto pl-5'>
+								{adminMessage?.map((value, i) => (
+									<div
+										key={i}
+										className={clsx('flex leading-8 items-center gap-2 w-full', {
+											'justify-start': value.action === 'sender',
+											'justify-end': value.action === 'receiver',
+										})}
+									>
+										<div className='flex'>
+											<span className='w-2/12'> {value.action === 'sender' && <span className=' flex justify-center font-medium bg-accent w-[2rem] h-[2rem] rounded-full text-white'>{value.identity.slice(0, 1)}</span>}</span>
+											<span
+												className={clsx('w-8/12 rounded-md px-2 my-5 min-w-[10rem]', {
+													'bg-gray-300': value.action === 'sender',
+													'bg-indigo-500': value.action === 'receiver',
+												})}
+											>
+												<p>{value.message}</p>
+												<sub className='ml-2]'>{currentTime}</sub>
+											</span>
+										</div>
+									</div>
+								))}
+							</div>
+						</RenderIf>
+
+						<RenderIf value={user.role === 0}>
+							<div ref={containerRef} className='h-full bg-gray-100 max-h-[17.5rem] = rounded overflow-y-auto pl-5'>
+								{userMessage?.map((value, i) => (
+									<div
+										key={i}
+										className={clsx('flex leading-8 items-center gap-2 w-full', {
+											'justify-start': value.action === 'sender',
+											'justify-end': value.action === 'receiver',
+										})}
+									>
+										<div className='flex'>
+											<span className='w-2/12'> {value.action === 'sender' && <span className=' flex justify-center font-medium bg-accent w-[2rem] h-[2rem] rounded-full text-white'>{value.identity.slice(0, 1)}</span>}</span>
+											<span
+												className={clsx('w-8/12 rounded-md px-2 my-5 min-w-[10rem]', {
+													'bg-gray-300': value.action === 'sender',
+													'bg-indigo-500': value.action === 'receiver',
+												})}
+											>
+												<p>{value.message}</p>
+												<sub className='ml-2]'>{currentTime}</sub>
+											</span>
+										</div>
+									</div>
+								))}
+							</div>
+						</RenderIf>
+						{/* <div ref={containerRef}></div> */}
+
+						<div className='relative'>
+							<textarea className='-ml-1 border-none borderGray' name='message' value={inputMsg} cols={32} rows={1} placeholder='Input a message' onKeyDown={onKeyInputMsg} onChange={onInputMessage} onFocus={onActiceFocus}></textarea>
+
+							<RenderIf value={active}>
+								<IoMdSend size={25} className='absolute right-2 top-2 hover:text-indigo-800' onClick={ontTestMsg} onMouseOver={onActiceFocus} />
+							</RenderIf>
+						</div>
+					</div>
+				</div>
+				<div></div>
+			</RenderIf>
+		</>
+	);
+}
+
+export default Chatbot

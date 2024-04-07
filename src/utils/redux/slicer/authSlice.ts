@@ -7,15 +7,17 @@ export interface IUser  {
     email:string;
     picture:string;
     accessToken:string;
+		role?:number;
 }
 
 
 const initialState: IUser = {
-    id:"",
-    displayName: "",
-    email: "",
-    picture: "",
-    accessToken: "",
+	id: '',
+	displayName: '',
+	email: '',
+	picture: '',
+	accessToken: '',
+	role:0
 };
 
 

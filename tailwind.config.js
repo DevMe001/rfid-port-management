@@ -23,6 +23,7 @@ export default {
 				fade: 'fadeIn 1s ease-in-out',
 				fadeOut: 'fadeOut 5s ease-in',
 				slideDown: 'slideDown 0.1s ease-in',
+				move: 'moveTop 1s linear 1.5s infinite alternate',
 			},
 			keyframes: {
 				fadeIn: {
@@ -38,6 +39,24 @@ export default {
 					'0%': { height: 0 },
 					'50%': { height: '5rem' },
 					'100%': { height: '8rem' },
+				},
+				
+				moveTop: {
+					'0%': {
+						top: '0',
+					},
+					'25%': {
+						top: '-0.15rem',
+					},
+					'50%': {
+						top: '-0.3rem',
+					},
+					'75%': {
+						top: '-0.15rem',
+					},
+					'100%': {
+						top: '0',
+					},
 				},
 			},
 		},

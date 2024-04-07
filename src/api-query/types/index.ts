@@ -130,7 +130,68 @@ interface PaymentProcess {
 };
 
 
+interface Chat{
+	answer:string;
+}
+
+
+interface Notification {
+	message: string;
+	sender_id: string;
+	receive_id: string;
+	createdAt: string;
+	senderDisplayName: string;
+	status: string;
+}
+
+interface MessageNotification {
+	data: Notification[];
+}
+
+
+interface NewMessage {
+	sender_id: string;
+	receive_id: string;
+	message: string;
+	type: string;
+}
+
+
+interface UnreadMessage{
+	sender_id:string;
+	receive_id:string;
+}
+
+interface ReadMessage {
+	message: string;
+	data:number
+}
+
+
+ interface UserMessageBubles {
+	data: MessageDisplay[];
+}
+
+export interface MessageDisplay {
+	role: string;
+	message: string;
+	status: string;
+	createdAt: string;
+	sender?: Sender;
+	receiver?: Receiver;
+};
+
+export interface Sender {
+  account_id?: string
+  displayName?: string
+}
+
+export interface Receiver {
+  account_id?: string
+  displayName?: string
+}
 
 
 
-export type { BookingSchedules, VehicleType, PersonalInformation, UploadFile, Account, PaymentOrder, PaymentProcess };
+
+export type { BookingSchedules, VehicleType, PersonalInformation, UploadFile, Account, PaymentOrder, PaymentProcess, Chat, MessageNotification, NewMessage, UnreadMessage, ReadMessage, UserMessageBubles };

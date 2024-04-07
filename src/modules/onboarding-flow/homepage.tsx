@@ -1,20 +1,22 @@
-import { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import CryptoJS from 'crypto-js';
 import { enqueueSnackbar } from 'notistack';
 import { addUser } from '../../utils/redux/slicer/authSlice';
 import waitSec from '../../utils/setTimeout';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useAppDispatch } from '../../utils/redux/store';
+import { RootState, useAppDispatch, useAppSelector } from '../../utils/redux/store';
 import Headers from './layout/homepage-headers';
 import HomepageMain from './layout/homepage-main';
 import RenderIf from '../../common/components/ui/render-if';
 import FooterMd from './layout/homepage-footer-md';
 import FooterXS from './layout/homepage-footer-sm';
-import { onToggleNavHomepageMobile } from '../../utils/hooks/globa.state';
+import { onToggleNavHomepageMobile, useChatOnPoint, useGlobalUrlPath } from '../../utils/hooks/globa.state';
 import { isUndefined } from 'lodash';
+import Chatbot from '../buyers/chatbot';
+import LoaderSpinner from '../../common/widget/loader';
 
 
-const HomePage = () => {
+const HomePage:React.FC = () => {
 
 
 		const [toggle] = onToggleNavHomepageMobile();
@@ -24,7 +26,12 @@ const HomePage = () => {
 		const navigate = useNavigate();
 
 		const dispatch = useAppDispatch();
-	
+
+
+		const chatUrl = useAppSelector((state:RootState) => state.chatMsg);
+
+		const [load,setLoader] = useState<boolean>(false);
+
 
 	
 	useEffect(() => {
@@ -38,9 +45,12 @@ const HomePage = () => {
 			const bytes = CryptoJS.AES.decrypt(decData, 'authenticate').toString(CryptoJS.enc.Utf8);
 			const data = JSON.parse(bytes);
 
-			console.log(data,'get data');
+	
+		
 	
 			if (data.accessToken) {
+
+		
 
 				enqueueSnackbar('Login success', { variant: 'success', autoHideDuration: 5000 });
 				await waitSec(3000);
@@ -52,10 +62,25 @@ const HomePage = () => {
 					email: !isUndefined(data.profile.emails) ? data.profile.emails[0].value : data.profile.displayName,
 					picture: data.profile.photos[0].value,
 					accessToken: data.accessToken,
+					role: data.role,
 				}),
 			);
 
-			  navigate('/user-dashboard');
+			
+					if(data.role == 1){
+								setLoader(true);
+								await waitSec(3000);
+								setLoader(false);
+
+						navigate('/admin-dasboard');
+					}else{
+								setLoader(true);
+								await waitSec(3000);
+								setLoader(false);
+
+						 navigate(chatUrl.urlPath);
+					}
+			 
 			} else {
 			  enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
 			}
@@ -70,15 +95,20 @@ const HomePage = () => {
 
 	
   return (
-		<div className='relative grid xs:grid-cols-1 sm:grid-cols-1 md:grid-cols-1 max-w-[90rem] mx-auto h-screen sm:h-[100%]' style={{ gridTemplateRows: '10vh repeat(2,1fr) 10vh' }}>
-			<Headers />
-			<HomepageMain />
-			<RenderIf value={!toggle}>
-				<FooterMd />
-				<FooterXS />
-			</RenderIf>
-
-		</div>
+		<>
+			<div className='relative'>
+				<div className='relative grid xs:grid-cols-1 sm:grid-cols-1 md:grid-cols-1 max-w-[90rem] mx-auto h-screen sm:h-[100%]' style={{ gridTemplateRows: '10vh repeat(2,1fr) 10vh' }}>
+					<Headers />
+					<HomepageMain />
+					<RenderIf value={!toggle}>
+						<FooterMd />
+						<FooterXS />
+					</RenderIf>
+				</div>
+				<Chatbot />
+			</div>
+			<LoaderSpinner load={load} width='w-screen' />
+		</>
 	);
 };
 

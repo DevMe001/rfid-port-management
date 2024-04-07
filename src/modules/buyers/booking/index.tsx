@@ -4,6 +4,7 @@ import FooterXS from '../../onboarding-flow/layout/homepage-footer-sm';
 import { onToggleNavHomepageMobile } from '../../../utils/hooks/globa.state';
 import Headers from '../../onboarding-flow/layout/homepage-headers';
 import BookingMain from './booking-main';
+import Chatbot from '../chatbot';
 
 const BuyerBooking = () => {
 
@@ -19,6 +20,7 @@ const BuyerBooking = () => {
 				<FooterMd />
 				<FooterXS />
 			</RenderIf>
+			<Chatbot/>
 		</div>
 	);
 }

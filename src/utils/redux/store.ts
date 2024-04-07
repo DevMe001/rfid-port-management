@@ -2,36 +2,16 @@ import {configureStore} from '@reduxjs/toolkit';
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
 import { TypedUseSelectorHook } from 'react-redux';
-import { combineReducers } from "redux";
 import logger from 'redux-logger';
 import {FLUSH, PAUSE, PERSIST, PURGE, Persistor, REGISTER, REHYDRATE, persistReducer, persistStore} from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { authService } from '../../api-query/auth-api';
-import authReducers from './slicer/authSlice';
 import { scheduleService } from '../../api-query/schedule-list.api';
-import passengerReducers from './slicer/passengerSlice';
-import passengerformSlice from './slicer/passengerformSlice';
 import { personalInformationService } from '../../api-query/personal-details.api';
 import { accountProfileServices } from '../../api-query/account-api';
 import { paymentService } from '../../api-query/payment-api';
-import  paymentReducers from './slicer/paymentSlice';
-
-
-// creates reducers
-const rootReducers = combineReducers({
-	// define api here
-	[authService.reducerPath]: authService.reducer,
-	authUser: authReducers,
-	[scheduleService.reducerPath]: scheduleService.reducer,
-	countPassenger: passengerReducers,
-	passengerFormDetails: passengerformSlice,
-	[personalInformationService.reducerPath]: personalInformationService.reducer,
-	[accountProfileServices.reducerPath]: accountProfileServices.reducer,
-	[paymentService.reducerPath]: paymentService.reducer,
-	paymentProcess: paymentReducers,
-});
-
-
+import { chatService } from '../../api-query/chat-api';
+import rootReducers from './combineReducer';
 
 
 // create persistor key
@@ -65,6 +45,7 @@ const store = configureStore({
         personalInformationService.middleware,
         accountProfileServices.middleware,
         paymentService.middleware,
+        chatService.middleware,
         logger
     ),
     devTools:process.env.NODE_ENV != 'production'

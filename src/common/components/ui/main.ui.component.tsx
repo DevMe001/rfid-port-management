@@ -1,4 +1,19 @@
-import { isEmpty } from "lodash"
+import { isEmpty, isUndefined } from "lodash"
+import { FaFacebookMessenger } from 'react-icons/fa6';
+import { RootState, useAppDispatch, useAppSelector } from "../../../utils/redux/store";
+import React, { useCallback, useState } from "react";
+import RenderIf from "./render-if";
+import useNavigationHandler from "../../../utils/hooks/useNavigationHandler";
+import moment from "moment";
+import { useGetReceiveMessageQuery, useGetUnreadCountQuery, useUpdateMessageStatusMutation } from "../../../api-query/chat-api";
+import { useGetProfileAccountQuery } from "../../../api-query/account-api";
+import clsx from "clsx";
+import { enqueueSnackbar } from "notistack";
+import { useChatToggle } from "../../../utils/hooks/globa.state";
+import { storeUserMessage } from "../../../utils/redux/slicer/chatUserDisplay";
+import { dateFormatted } from "../../../utils";
+import { UserMessageBubles } from "../../../api-query/types";
+import { storeChat } from "../../../utils/redux/slicer/chatSlice";
 
 const cardBox = [
     {
@@ -31,35 +46,234 @@ const cardBox = [
 ]
 
 
-const DashboardMain = () => {
+const userNotification = [
+	{
+		username: 'Denis',
+		message: 'hello',
+		date: '3/22/2024',
+	},
+	{
+		username: 'Monet',
+		message: 'how are you',
+		date: '4/01/2024',
+	},
+	{
+		username: 'Collen',
+		message: 'hows you doing',
+		date: '03/03/2024',
+	},
+	{
+		username: 'Dyesebel',
+		message: 'lover boy',
+		date: '03/02/2024',
+	},
+	{
+		username: 'Steve',
+		message: 'talking with you',
+		date: '03/01/2024',
+	},
+	{
+		username: 'Poe',
+		message: 'came to you',
+		date: '03/05/2024',
+	},
+	{
+		username: 'June',
+		message: 'i have done',
+		date: '02/02/2024',
+	},
+	{
+		username: 'Maine',
+		message: 'ennough',
+		date: '01/02/2024',
+	},
+];
+
+
+export const MessageNotificationUserBox: React.FC = () => {
+	const [notificationToggle, setNotificationToggle] = useState<boolean>(false);
+
+
+	const [, setToggle] = useChatToggle();
+
+    const user = useAppSelector((state: RootState) => state.authUser);
+
+
+	const { data: accountUser } = useGetProfileAccountQuery(user?.id as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });	
+	
+	
+	
+	const { data: getMessageNotifiacation } = useGetReceiveMessageQuery(accountUser?.account_id as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
+
+
+	const { data: unreadCount } = useGetUnreadCountQuery(accountUser?.account_id as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
+
+	const [updateMessageStatus] = useUpdateMessageStatusMutation();
+
+
+const dispatch = useAppDispatch();
+
+const onUserMessageBubble = useCallback(async (sender_id:string) => {
+
+	console.log(sender_id,'get sender id');
+	const statusUnread = {
+		sender_id: accountUser?.account_id as string,
+		receive_id: sender_id,
+	};
+
+	try {
+	const res =  await updateMessageStatus(statusUnread);
+
+		if(res){
+			setToggle(true);
+
+			
+
+			dispatch(storeUserMessage([]));
+			if('data' in res){
+				dispatch(storeUserMessage(res.data));
+				setNotificationToggle(false);
+				dispatch(storeChat({ connectAdmin: true, sender_id: sender_id }));
+			}
+
+
+		}
+
+
+	} catch (error) {
+		enqueueSnackbar('Something erro on server side', { variant: 'error', autoHideDuration: 2000 });
+	}
+}, []);
+
+
+
+
+	return (
+		<div>
+			<div className='relative'>
+				<FaFacebookMessenger
+					size={30}
+					onClick={() => setNotificationToggle(!notificationToggle)}
+					className={clsx('cursor-pointer', {
+						'text-gray-200': isEmpty(getMessageNotifiacation?.data) || unreadCount === 0,
+						'text-primary': !isEmpty(getMessageNotifiacation?.data) && unreadCount !== 0,
+					})}
+				/>
+				<RenderIf value={!isEmpty(getMessageNotifiacation?.data) && unreadCount !== 0}>
+					<sup className='absolute right-0 left-8 text-lg font-medium text-white w-[1.5rem] h-[1.4rem] rounded-full bg-accent'>
+						<span className='flex justify-center items-center -mt-1'>{unreadCount}</span>
+					</sup>
+				</RenderIf>
+			</div>
+			<RenderIf value={notificationToggle}>
+				<div className='absolute top-20 right-10 bg-white w-[18rem] h-[auto] min-h-[20rem] max-h-[20rem] z-[9999] shadow-md p-5 overflow-y-auto'>
+					<RenderIf value={!isEmpty(getMessageNotifiacation?.data)}>
+						<p className='font-medium text-center mb-5'>Message</p>
+					</RenderIf>
+
+					<ul className='text-lg text-center '>
+						<li className='text-navy font-medium'>
+							<RenderIf value={!isEmpty(getMessageNotifiacation?.data)}>
+								<ul>
+									{!isEmpty(getMessageNotifiacation) &&
+										getMessageNotifiacation?.data.map((notif, i) => (
+											<li key={i} className='border-b border-gray-200 my-2' onClick={() => onUserMessageBubble(notif.sender_id)}>
+												<span className='flex gap-2 cursor-pointer'>
+													<div className='cursor-pointer uppercase bg-accent text-white rounded-full py-1 px-3 w-[2rem] h-[2rem] flex justify-center items-center shadow-md font-medium text-lg'>{notif.senderDisplayName.slice(0, 1)}</div>
+													<div className='flex flex-col justify-center items-center w-full'>
+														<p
+															className={clsx({
+																'text-gray-800 font-medium': notif.status == 'unread',
+																'font-light text-gray-300 ': notif.status == 'read',
+															})}
+														>
+															{notif.senderDisplayName}
+														</p>
+														<p
+															className={clsx({
+																'text-gray-800 font-bold': notif.status == 'unread',
+																'font-light text-gray-300 ': notif.status == 'read',
+															})}
+														>
+															{notif.message}
+														</p>
+													</div>
+													<sup
+														className={clsx('text-sm', {
+															'text-gray-500': notif.status == 'unread',
+															'font-light text-gray-300 ': notif.status == 'read',
+														})}
+													>
+														{dateFormatted(notif.createdAt)}
+													</sup>
+												</span>
+											</li>
+										))}
+								</ul>
+							</RenderIf>
+							<RenderIf value={isEmpty(getMessageNotifiacation?.data) || isUndefined(getMessageNotifiacation)}>
+								<ul className='text-red-500'>No notification found</ul>
+							</RenderIf>
+						</li>
+					</ul>
+				</div>
+			</RenderIf>
+		</div>
+	);
+}; 
+
+
+const DashboardHeader:React.FC = ()=>{
+
+    const user = useAppSelector((state: RootState) => state.authUser);
+		const [userProfile, setProfile] = useState<boolean>(false);
+		const [onHandlerNavigationEvent] = useNavigationHandler();
+
+
+    return (
+			<>
+				<div className=' flex justify-end bg-white p-4 shadow-sm items-center gap-10'>
+					<MessageNotificationUserBox />
+					<div onClick={() => setProfile(!userProfile)} className='cursor-pointer uppercase bg-accent text-white rounded-full py-1 px-3 w-[3rem] h-[3rem] flex justify-center items-center shadow-md font-medium text-lg'>
+						{user.displayName.slice(0, 1)}
+					</div>
+				</div>
+				<RenderIf value={userProfile}>
+					<div className='absolute top-20 right-0 bg-white w-[10rem] h-[3rem] z-10 shadow-md' onMouseOut={() => setProfile(!userProfile)}>
+						<ul className='text-lg text-center '>
+							<li className='text-navy font-medium' onClick={() => onHandlerNavigationEvent('signout')}>
+								Logout
+							</li>
+						</ul>
+					</div>
+				</RenderIf>
+			</>
+		);
+} 
+
+
+const DashboardMain:React.FC = () => {
+
   return (
-    <div className='main'>
-         <div className="cardBox">
+		<div className='relative main !bg-lite'>
+			<DashboardHeader />
+			<div className='cardBox bg-lite'>
+				{!isEmpty(cardBox) &&
+					cardBox.map((card, i) => (
+						<div key={i} className='card'>
+							<div>
+								<div className='numbers'>{card.count}</div>
+								<div className='cardName'>{card.label}</div>
+							</div>
 
-                {!isEmpty(cardBox) && cardBox.map((card,i) => (
-                    <div key={i} className="card">
-                    <div>
-                        <div className="numbers">{card.count}</div>
-                        <div className="cardName">{card.label}</div>
-                    </div>
-
-                    <div className="iconBx">
-                      <span className='icon' dangerouslySetInnerHTML={{__html: card.icon}}></span>
-
-                    </div>
-
-                 </div>
-                ))}
-
-
-                
-
-
-               
-            </div>
-
-    </div>
-  )
+							<div className='iconBx'>
+								<span className='icon' dangerouslySetInnerHTML={{ __html: card.icon }}></span>
+							</div>
+						</div>
+					))}
+			</div>
+		</div>
+	);
 }
 
 export default DashboardMain
