@@ -57,6 +57,9 @@ const passengerFormSlice = createSlice({
   reducers:{
     storePassengerForm : (_state,action:PayloadAction<PassegerForms>) =>{
         return action.payload;
+    },
+		 resetPassengerForm : () =>{
+        return initialState;
     }
   },
 	 extraReducers: (builder) => {
@@ -67,7 +70,7 @@ const passengerFormSlice = createSlice({
 });
 
 
-export const { storePassengerForm } = passengerFormSlice.actions;
+export const { storePassengerForm, resetPassengerForm } = passengerFormSlice.actions;
 
 
 export default passengerFormSlice.reducer;

@@ -3,13 +3,14 @@ import LoaderSpinner from '../../../../common/widget/loader';
 import { useGlobaLoader } from '../../../../utils/hooks/globa.state';
 import  CheckVerification from '../../../../assets/check_verification.svg'
 import ErrorVerification from '../../../../assets/error_verification.svg';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import waitSec from '../../../../utils/setTimeout';
 import { usePaymentProcessMutation } from '../../../../api-query/payment-api';
 import { PaymentProcess } from '../../../../api-query/types';
-import { RootState, useAppSelector } from '../../../../utils/redux/store';
+import { RootState, useAppDispatch, useAppSelector } from '../../../../utils/redux/store';
 import { useGetPersonalDetailsByIdQuery } from '../../../../api-query/personal-details.api';
 import { enqueueSnackbar } from 'notistack';
+import { resetPassengerForm } from '../../../../utils/redux/slicer/passengerformSlice';
 
 const PaymentBox:React.FC = () => {
 	const location = useLocation();
@@ -23,10 +24,11 @@ const PaymentBox:React.FC = () => {
 
 	const [paymentProcess] = usePaymentProcessMutation();
 
+	const dispatch = useAppDispatch();
 
 
 
-
+	
 	const user = useAppSelector((state:RootState) => state.authUser)
 
 
@@ -35,6 +37,7 @@ const PaymentBox:React.FC = () => {
 	const  passengers =  useAppSelector((state:RootState) => state.passengerFormDetails);
 	const paymentForm = useAppSelector((state:RootState) => state.paymentProcess);
 
+	const locatePath = location.pathname.split('/')[2];
 
 
 useEffect(() => {
@@ -44,7 +47,7 @@ useEffect(() => {
 			setStatus('Failed');
 			await waitSec(3000);
 			setLoader(false);
-			navigate('/booking/88ed9bb0-6be6-4f95-b02a-5cb7dc2a1ca5');
+			navigate(`/booking/${locatePath}`);
 		} else {
 			paymentRequest(); // Ensure this function doesn't trigger a state update that causes infinite loop
 		}
@@ -92,21 +95,31 @@ async function paymentRequest(){
 				   setLoader(true);
 					await waitSec(3000);
 					setLoader(false);
-					setStatus('Completed');
+				
+			console.log(paymentSend);
 
-		
-
-			if(paymentSend.data === 'payment success'){
+			if(paymentSend.data.message.includes('payment succes')){
 				enqueueSnackbar('Transaction completed',{variant:'success', autoHideDuration:3000})
+				setStatus('Completed');
+				dispatch(resetPassengerForm());
+
+				await waitSec(2000);
+				navigate(`/booking`);
+
 			}else{
-				enqueueSnackbar('Wallet existed', { variant: 'warning', autoHideDuration: 3000 });
-					setStatus('Wallet existed');
+
+				const msg = paymentSend.data.message ?? 'Wallet existed'; 
+				enqueueSnackbar(msg, { variant: 'warning', autoHideDuration: 3000 });
+					setStatus(msg ?? 'Walet existed');
+					
+					navigate(`/booking/${locatePath}`);
+
 
 			}
 
 				
 			} catch (error) {
-				
+				console.log(error)
 			}
 
 }
