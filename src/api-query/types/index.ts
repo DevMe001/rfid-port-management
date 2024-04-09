@@ -56,6 +56,10 @@ interface Account {
 	photo: string;
 }
 
+interface AccountDetails{
+	data:Account
+}
+
 
 interface Address {
 	city: string;
@@ -152,6 +156,7 @@ interface MessageNotification {
 interface NewMessage {
 	sender_id: string;
 	receive_id: string;
+	status?: string;
 	message: string;
 	type: string;
 }
@@ -194,4 +199,6 @@ export interface Receiver {
 
 
 
-export type { BookingSchedules, VehicleType, PersonalInformation, UploadFile, Account, PaymentOrder, PaymentProcess, Chat, MessageNotification, NewMessage, UnreadMessage, ReadMessage, UserMessageBubles };
+
+
+export type { BookingSchedules, VehicleType, PersonalInformation, UploadFile, AccountDetails,Account, PaymentOrder, PaymentProcess, Chat, MessageNotification, NewMessage, UnreadMessage, ReadMessage, UserMessageBubles };

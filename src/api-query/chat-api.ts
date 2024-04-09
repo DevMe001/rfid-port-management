@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import Immutable from "../immutable/constant";
-import { Chat, MessageDisplay, MessageNotification, NewMessage, UnreadMessage, UserMessageBubles } from './types';
+import { Chat, MessageDisplay, MessageNotification, NewMessage, UnreadMessage } from './types';
 
 
 
@@ -22,13 +22,13 @@ export const chatService = createApi({
 			invalidatesTags: ['Chat'],
 		}),
 		getReceiveMessage: builder.query<MessageNotification, string>({
-			query: (receiveID) => `messsage/receive/${receiveID}`,
+			query: (receiveID) => `message/receive/${receiveID}`,
 			providesTags: ['Chat'],
 			keepUnusedDataFor: 0,
 		}),
 
 		getUnreadCount: builder.query<number, string>({
-			query: (sender_id) => `messsage/unread/${sender_id}`,
+			query: (sender_id) => `message/unread/${sender_id}`,
 			providesTags: ['Chat'],
 			keepUnusedDataFor: 0,
 		}),

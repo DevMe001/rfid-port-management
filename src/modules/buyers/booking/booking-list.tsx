@@ -191,8 +191,11 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 				await waitSec(3000);
 				setLoader(false);
 				setSelectedIndex(2);
+				
 		
 				navigate('/user-dashboard');
+
+				
 			}
 
 			

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import RenderIf from '../../../common/components/ui/render-if';
 import { onToggleNavHomepageMobile, useSelectIndex } from '../../../utils/hooks/globa.state';
 import '../styles/dashboard-main.css'
@@ -92,11 +92,27 @@ const DashboardUser = () => {
 	const getProfileUser = !isEmpty(userProfile) ? userProfile : null;
 	const getProfileDetails = !isEmpty(userProfileDetails) ? userProfileDetails : null;
 
+	console.log(userProfileDetails);
+
+
+useEffect(() => {
+	document.body.style.overflow = '';
+
+	return () => {
+		document.body.style.overflow = 'initial';
+	};
+}, []);
+
+
+
+
 
 	const onSigoutOut = useCallback(()=>{
 		onHandlerNavigationEvent('signout');
 	},[])
   
+
+
 
 	const onSelectedMainContent = (index:number)=>{
 		
@@ -211,7 +227,6 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 	let currentYear = new Date().getFullYear();
 	let dateDiff = Math.abs(currentYear - chosenYear);
 
-	console.log(value,'get value');
 
 	formikProps.form.setFieldValue('birthdate', value);
 	formikProps.form.setFieldValue('age', dateDiff);
@@ -244,7 +259,7 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 							})}
 						</ul>
 					</aside>
-					<main className='bg-white relative z-10'>
+					<main className='bg-white relative z-8'>
 						<RenderIf value={selectIndex == 0}>
 							<div className='flex flex-col p-5 leading-9'>
 								<h4 className='py-5 text-navy font-medium'>Dashboard</h4>
@@ -438,7 +453,7 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 												<div className='block'>
 													<Label className='text-navy' htmlFor='nationality' value='Nationality' />
 												</div>
-												<Field name='nationality'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} color='info' id='nationality' name='nationality' type='text' value={'Filipino'} required />}</Field>
+												<Field name='nationality'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} color='info' id='nationality' name='nationality' type='text' defaultValue={'Filipino'} required />}</Field>
 
 												<ErrorMessage
 													name='nationality'

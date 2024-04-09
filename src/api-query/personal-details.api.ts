@@ -10,7 +10,7 @@ export const personalInformationService = createApi({
 	}),
 	endpoints: (builder) => ({
 		getPersonalDetailsById: builder.query<PersonalInformation, string>({
-			query: (personal_id) => `user/personal/${personal_id}`,
+			query: (personal_id) => `/user/personal/${personal_id}`,
 			providesTags: ['PersonalDetails'],
 			keepUnusedDataFor: 0,
 		}),

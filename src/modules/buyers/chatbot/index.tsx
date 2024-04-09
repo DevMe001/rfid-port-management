@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { SiChatbot } from 'react-icons/si';
-import { useChatOnPoint, useChatToggle } from '../../../utils/hooks/globa.state';
+import { useChatToggle } from '../../../utils/hooks/globa.state';
 import RenderIf from '../../../common/components/ui/render-if';
 import clsx from 'clsx';
 import { IoCloseCircleSharp } from 'react-icons/io5';
@@ -15,52 +15,16 @@ import { useCreateMessageMutation, useGetChatMessageMutation } from '../../../ap
 import { io } from 'socket.io-client';
 import Immutable from '../../../immutable/constant';
 import { MessageDisplay, NewMessage } from '../../../api-query/types';
-import { useGetProfileAccountQuery } from '../../../api-query/account-api';
+import { useGetProfileAccountQuery, useGetProfileAdminRoleQuery } from '../../../api-query/account-api';
 import { dateFormatted } from '../../../utils';
 import { storeUserMessage } from '../../../utils/redux/slicer/chatUserDisplay';
-import { Else, RenderElement } from '../../../common/components/ui/rendeifelse';
+import Lottie from 'lottie-react';
+import typingAnimation from '../../../lotties/typing.json'
 
-type Message={
-	userId?:string;
-	identity:string;
-	type:string;
-	message:string;
-	action:string;
-}
-	// const userBubbleMessage: Message[] = [
-	// 	{
-	// 		identity: 'Bot',
-	// 		type: 'user',
-	// 		message: 'how are you',
-	// 		action: 'sender',
-	// 	},
-	// 	{
-	// 		identity: 'Ramon',
-	// 		type: 'bot',
-	// 		message: 'Same to you as well',
-	// 		action: 'receiver',
-	// 	},
-	// 	{
-	// 		identity: 'Bot',
-	// 		type: 'bot',
-	// 		message: 'Thanks',
-	// 		action: 'sender',
-	// 	},
-	// 	{
-	// 		identity: 'Ramon',
-	// 		type: 'bot',
-	// 		message: 'See yah',
-	// 		action: 'receiver',
-	// 	},
-	// 	{
-	// 		identity: 'Bot',
-	// 		type: 'user',
-	// 		message: 'Yes ask me anythinh',
-	// 		action: 'sender',
-	// 	},
-	// ];
 
-const socket = io(Immutable.API); // Replace with your server URL
+
+
+export const socket = io(Immutable.API); // Replace with your server URL
 
 
 const Chatbot:React.FC = () => {
@@ -83,7 +47,23 @@ const userMesasgeBuble = useAppSelector((state: RootState) => state.userMessageB
 
 const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeBuble) ? userMesasgeBuble : []; 
 
+// user state
+	const [userMessage, setUserMessage] = useState<MessageDisplay[] | []>([
+		{
+			role: '',
+			message: '',
+			status: '',
+			createdAt: '',
+			sender: {
+				displayName: 'Test',
+			},
+			receiver: {
+				displayName: 'Test',
+			},
+		},
+	]);
 
+// admin state
 	const [adminMessage, setAdminMessage] = useState<MessageDisplay[] | []>([
 		{
 			role: '',
@@ -101,20 +81,23 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 
 
 
-
 	const user = useAppSelector((state: RootState) => state.authUser);
 
 	const { data: accountUser } = useGetProfileAccountQuery(user?.id as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });	
+
+
+	const { data: adminRole } = useGetProfileAdminRoleQuery<any>(undefined,{ pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
 	
 
 	const chatStatus = useAppSelector((state:RootState)=> state.chatMsg);
 	const { onOpen } = useToggleAuth();
-	const [, setChatTouch] = useChatOnPoint();
+
 	const dispatch = useAppDispatch();
 	const [inputMsg, setInputMsg] = useState<string>('');
 	const chatToggle = useAppSelector((state: RootState) => state.chatMsg);
 	const [getChatMessage] = useGetChatMessageMutation();
 	const [createMessage] = useCreateMessageMutation();
+	const [onMessage,setOnMEssage] = useState(false);
 
 	const containerRef = useRef<HTMLDivElement>(null);
 
@@ -130,7 +113,11 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
  useEffect(() => {
 			const fetchData = async () => {
 				try {
-					setAdminMessage(getMessageByUser); // Assuming getMessageByUser is an async function
+					scrollToBottom();
+					setAdminMessage(getMessageByUser); 
+					setUserMessage(getMessageByUser);
+							
+					
 				} catch (error) {
 					console.error('Error fetching data:', error);
 				}
@@ -141,95 +128,86 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 
 	
 	
-// useEffect(() => {
+useEffect(() => {
 
-// 	if(socket){
-// 			socket.emit('join');
+	if(socket){
+			socket.emit('join');
 
-// 			socket.off('admin message');
-// 			// Attach new event listener for admin replies
-// 			socket.on('admin message', (adminReply) => {
+			socket.off('admin message');
+			// Attach new event listener for admin replies
+			socket.on('admin message', (adminReply) => {
 			
-// 				console.log('Received admin reply:', adminReply.message);
+				console.log('Received admin reply:', adminReply.message);
+
+					if (adminReply.message.message == 'typing' && user.role === 0) {
+						setOnMEssage(true);
+					} else {
+						setOnMEssage(false);
+						if (!isEmpty(adminReply.message.role)) {
+							setToggle(true);
+							scrollToBottom();
+
+							if (!isEmpty(adminReply.message)) {
+								setUserMessage((prev) => [...prev, adminReply.message]);
+							}
+						}
+					}
+	
+
+		
+
+			});
+	}
+
+	return () => {
+		// Clean up event listener when component unmounts
+		socket.off('join');
+		socket.off('admin message');
+	};
+}, [socket]);
 
 
-// 					const createMessagetoSender = {
-// 						userId: adminReply.message.userId,
-// 						identity: adminReply.message.identity,
-// 						type: adminReply.message.type,
-// 						message: adminReply.message.message,
-// 						action: 'sender',
-// 					};
+
+		useEffect(() => {
+			// Listen for 'get' event from the server
+			socket.emit('join');
+
+			// Clean up existing event listener
+			socket.off('private message');
+
+			// Attach new event listener
+			socket.on('private message', async (receivedMessages) => {
+				setToggle(true);
+
+
+				console.log(receivedMessages,'get retrieve message');
 
 				
+		
+				if (receivedMessages.message.message == 'typing' && user.role === 1){
+					setOnMEssage(true);
+				}else{
+					setOnMEssage(false);
+						if (!isEmpty(receivedMessages.message.role)) {
+							setAdminMessage((prev) => [...prev, receivedMessages.message]);
 
-// 				 setToggle(true);
-// 			scrollToBottom(); 
+							dispatch(storeChat({ connectAdmin: true, sender_id: receivedMessages.message.userId }));
 
-// 			setUserMessage((prev) => [...prev, createMessagetoSender]);
-
-
-// 			});
-// 	}
-
-// 	return () => {
-// 		// Clean up event listener when component unmounts
-// 		socket.off('joinuser');
-// 		socket.off('admin message');
-// 	};
-// }, [socket]);
-
-
-
-		// useEffect(() => {
-		// 	// Listen for 'get' event from the server
-		// 	socket.emit('join');
-
-		// 	// Clean up existing event listener
-		// 	socket.off('private message');
-
-		// 	// Attach new event listener
-		// 	socket.on('private message', async (receivedMessages) => {
-		// 		setToggle(true);
-
+							scrollToBottom();
+						}
+				}
 				
-
-
-		// 		setAdminMessage((prev) => [...prev, receivedMessages.message]);
-
-		// 		dispatch(storeChat({ connectAdmin: true }));
-
-		// 		scrollToBottom();
-
 			
 
-		// 		if (user.role === 0) {
-		// 				if (receivedMessages.message.message.includes('might need your assistance')) {
-		// 						const recentMessage: NewMessage = {
-		// 							sender_id: 'ef30afa2-f600-4dec-bc9a-ba1379dc5e2d',
-		// 							receive_id: '369fdcfe-b891-454b-b1f9-a0fa403a38d9',
-		// 							message: receivedMessages.message.message,
-		// 							type: 'bot',
-		// 						};
-		// 							await createMessage(recentMessage);
-		// 				} else {
-		// 						const newMessage: NewMessage = {
-		// 							sender_id: accountUser?.account_id as string,
-		// 							receive_id: '369fdcfe-b891-454b-b1f9-a0fa403a38d9',
-		// 							message: receivedMessages.message.message,
-		// 							type: 'user',
-		// 						};
-		// 							await createMessage(newMessage);
-		// 				}
-		// 		}
-		// 	});
+				
+			});
 
-		// 	return () => {
-		// 		// Clean up event listener when component unmounts
-		// 		socket.off('join');
-		// 		socket.off('private message');
-		// 	};
-		// }, [user.role,socket]);
+			return () => {
+				// Clean up event listener when component unmounts
+				socket.off('join');
+				socket.off('private message');
+			};
+		}, [socket]);
 
 
 		// user side
@@ -262,9 +240,82 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 		setActive(true);
 	};
 
-	const onInputMessage = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		setInputMsg(e.target.value);
-	}, []);
+	// user is typing
+
+ useEffect(() => {
+		let typingTimer: NodeJS.Timeout;
+
+		const handleKeyDown = () => {
+			clearTimeout(typingTimer);
+			if (!onMessage && chatStatus.connectAdmin) {
+				console.log('Typing started');
+					if(user.role === 0){
+						socket.off('adminResponse');
+						socket.emit('privateMessage', { message: 'typing' });
+					}
+						if (user.role === 1) {
+							socket.off('privateMessage');
+
+							socket.emit('adminResponse', { message: 'typing' });
+						}
+			}
+		};
+
+		const handleKeyUp = () => {
+
+			if (chatStatus.connectAdmin) {
+						clearTimeout(typingTimer);
+						typingTimer = setTimeout(() => {
+						
+							if(user.role === 0){
+							socket.off('adminResponse');
+
+								socket.emit('privateMessage', { message: 'stop' });
+							}	if (user.role === 1) {
+								socket.off('privateMessage');
+
+								socket.emit('adminResponse', { message: 'stop' });
+							}
+
+							console.log('Typing stopped');
+						}, 1000);
+			}
+		
+		};
+
+		window.addEventListener('keydown', handleKeyDown);
+		window.addEventListener('keyup', handleKeyUp);
+
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+			window.removeEventListener('keyup', handleKeyUp);
+		};
+ }, [onMessage, socket]);
+
+
+
+
+
+
+
+
+
+
+
+	const onInputMessage = useCallback(
+		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+			setInputMsg(e.target.value);
+
+				
+
+		
+			
+		},
+		[socket],
+	);
+
+
+
 
 	const scrollToBottom = () => {
 		if (containerRef.current) {
@@ -329,7 +380,7 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 
 	
 
-				if (!chatStatus.connectAdmin){
+				if (chatStatus.connectAdmin == false){
 					// const createMessagetoReceiver = {
 					// 	userId: user.id,
 					// 	identity: user.displayName,
@@ -341,7 +392,7 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 					// // Emit the privateMessage event to the server
 					// socket.emit('privateMessage', createMessagetoReceiver);
 
-					const assistanceMsg = `Hi admin user ${user.displayName} might need your assistance`;
+					const assistanceMsg = `Hi admin ${user.displayName} might need your assistance,You can reply now and ${user.displayName} will receive it`;
 
 					setMessageState('receiver', assistanceMsg, 'admin');
 
@@ -351,36 +402,34 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 
 					const dateString = currentDate.format('YYYY-MM-DD HH:mm:ss');
 
-					setAdminMessage((prev) => [
-						...prev,
-						{
-							role: 'sender',
-							message: assistanceMsg,
-							status: 'unread',
-							createdAt: dateString,
-							sender: {
-								displayName: 'Bot',
-							},
-							receiver: {
-								displayName: 'Dev Me',
-							},
-						},
-					]);
+							const createMessagetoReceiver = {
+								role: 'sender',
+								userId:accountUser?.account_id as string,
+								senderMsg:inputMsg,
+								message: assistanceMsg,
+								status: 'unread',
+								createdAt: dateString,
+								sender: {
+									displayName: 'Bot',
+								},
+								receiver: {
+									displayName: adminRole?.displayName,
+								},
+							};
 
-					const recentMessage: NewMessage = {
-						sender_id: 'ef30afa2-f600-4dec-bc9a-ba1379dc5e2d',
-						receive_id: '369fdcfe-b891-454b-b1f9-a0fa403a38d9',
-						message: assistanceMsg,
-						type: 'bot',
-					};
-					await createMessage(recentMessage);
+			
+
+
+						setAdminMessage((prev) => [...prev, createMessagetoReceiver]);
+
+				
+				
+						socket.emit('privateMessage', createMessagetoReceiver);
 					
-					setToggle(true);
+					console.log('are you emitted')
+						console.log('erceiver emit', inputMsg);
 
-						
-					dispatch(storeChat({ connectAdmin: true }));
-
-					scrollToBottom();
+				
 				}
 		}
 
@@ -388,8 +437,9 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 						
 			
 
-					setMessageState('receiver', inputMsg, 'admin');
+					setMessageState('sender', inputMsg, 'admin');
 
+						console.log('erceiver emit', inputMsg);
 						
  
 					// const createMessage = {
@@ -400,14 +450,15 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 					// 	action: 'sender',
 					// };
 
-					// socket.emit('adminResponse', createMessage);
+					//  socket.emit('adminResponse', createMessage);
 
 			
 				} 
 				if (user.role === 0 && chatStatus.connectAdmin) {
 		
 					setMessageState('receiver', inputMsg,'admin');
-					socket.emit('privateMessage', createMessage);
+					
+						console.log('are you emit',inputMsg);
 
 				}
 				
@@ -420,11 +471,18 @@ const getMessageByUser = !isUndefined(userMesasgeBuble) || !isEmpty(userMesasgeB
 				
 							setMessageState('sender', getAnswertoQuestion?.data?.answer as string, 'bot','Bot');
 
+							
+						console.log('bot emit');
+						console.log('erceiver emit', inputMsg);
+							
+
+
+					}
+					if(user.role === 0){
+						 setMessageState('receiver', inputMsg);
 					}
 
 			
-						setMessageState('user', inputMsg);
-
 				
 				}
 			
@@ -446,29 +504,89 @@ async function setMessageState(role:string,message:string,type?:string,botName?:
 			const dateString = currentDate.format('YYYY-MM-DD HH:mm:ss');
 
 
-		setAdminMessage((prev) => [
-			...prev,
-			{
+		if (user.role == 0) {
+
+			const userReply = {
 				role: role,
 				message: message,
-				status: 'unread',
+				status: chatStatus.onActive ? 'read' : 'unread',
 				createdAt: dateString,
 				sender: {
-					displayName: !isUndefined(botName) ? botName  : user.displayName, 
+					displayName: !isUndefined(botName) ? botName : user.displayName,
 				},
 				receiver: {
-					displayName: 'Dev Me',
+					displayName: adminRole?.displayName,
 				},
-			},
-		]);
+			};
 
-		const newMessage: NewMessage = {
-			sender_id: accountUser?.account_id as string,
-			receive_id: chatStatus?.sender_id as string,
-			message: inputMsg,
-			type: type ?? 'user',
-		};
-		await createMessage(newMessage);
+				setUserMessage((prev) => [...prev, userReply]);
+
+					if (isUndefined(botName)) {
+							const newMessage: NewMessage = {
+								sender_id: accountUser?.account_id as string,
+								receive_id: adminRole?.account_id as string,
+								message: inputMsg,
+								status: chatStatus.onActive ? 'read' : 'unread',
+								type: type ?? 'user',
+							};
+
+							if(chatStatus.connectAdmin){
+								
+								await createMessage(newMessage);
+
+								const createMessagetoReceiver = {
+									role: 'sender',
+									userId: accountUser?.account_id as string,
+									senderMsg: inputMsg,
+									message: message,
+									status: chatStatus.onActive ? 'read' : 'unread',
+									createdAt: dateString,
+									sender: {
+										displayName: user.displayName,
+									},
+									receiver: {
+										displayName: adminRole?.displayName,
+									},
+								};
+
+							socket.emit('privateMessage', createMessagetoReceiver);
+							}
+					}
+		
+		}
+
+		if(user.role === 1){
+
+			const adminReply = {
+				role: role,
+				message: message,
+				status: chatStatus.onActive ? 'read' : 'unread',
+				createdAt: dateString,
+				sender: {
+					displayName: !isUndefined(botName) ? botName : user.displayName,
+				},
+				receiver: {
+					displayName: adminRole?.displayName,
+				},
+			};
+
+				setAdminMessage((prev) => [...prev, adminReply]);
+
+				const newMessage: NewMessage = {
+					sender_id: accountUser?.account_id as string,
+					receive_id: chatStatus?.sender_id as string,
+					message: inputMsg,
+					status: chatStatus.onActive ? 'read' : 'unread',
+					type: type ?? 'user',
+				};
+
+				await createMessage(newMessage);
+			 socket.emit('adminResponse', adminReply);
+		}
+	
+
+
+		
 }
 
 
@@ -480,7 +598,6 @@ async function setMessageState(role:string,message:string,type?:string,botName?:
 
 	}, []);
 
-	const currentTime = moment().format('ddd [at] h:mma');
 
 	return (
 		<>
@@ -535,10 +652,10 @@ async function setMessageState(role:string,message:string,type?:string,botName?:
 								</div>
 							))} */}
 
-						{/* <RenderIf value={user.role === 1 && !isEmpty(adminMessage)}>
+						<RenderIf value={user.role === 1 && !isEmpty(adminMessage)}>
 							<div ref={adminRef} className='h-full bg-gray-100 max-h-[17.5rem] = rounded overflow-y-auto pl-5'>
 								{!isEmpty(adminMessage) &&
-									adminMessage?.map((value,i) => (
+									adminMessage?.map((value, i) => (
 										<div
 											key={i}
 											className={clsx('flex leading-8 items-center gap-2 w-full', {
@@ -549,7 +666,7 @@ async function setMessageState(role:string,message:string,type?:string,botName?:
 											<div className='flex'>
 												<span className='w-2/12'>
 													<RenderIf value={value.role === 'sender'}>
-														<span className=' flex justify-center font-medium bg-accent w-[2rem] h-[2rem] rounded-full text-white'>{value?.sender?.displayName.slice(0, 1) as string ?? ''}</span>
+														<span className=' flex justify-center font-medium bg-accent w-[2rem] h-[2rem] rounded-full text-white'>{(value?.sender?.displayName?.slice(0, 1) as string) ?? ''}</span>
 													</RenderIf>
 												</span>
 
@@ -560,17 +677,17 @@ async function setMessageState(role:string,message:string,type?:string,botName?:
 													})}
 												>
 													<p>{value.message}</p>
-													<sub className='ml-2]'>{dateFormatted(value?.createdAt)}</sub>
+													<sub className='ml-2]'>{!isEmpty(value.createdAt) ? dateFormatted(value?.createdAt) : ''}</sub>
 												</span>
 											</div>
 										</div>
 									))}
 							</div>
-						</RenderIf> */}
-
-					
+						</RenderIf>
+						<div></div>
+						<RenderIf value={user.role == 0}>
 							<div ref={containerRef} className='h-full bg-gray-100 max-h-[17.5rem] = rounded overflow-y-auto pl-5'>
-								{adminMessage?.map((value, i) => (
+								{userMessage?.map((value, i) => (
 									<div
 										key={i}
 										className={clsx('flex leading-8 items-center gap-2 w-full', {
@@ -592,16 +709,23 @@ async function setMessageState(role:string,message:string,type?:string,botName?:
 												})}
 											>
 												<p>{value.message}</p>
-												<sub className='ml-2]'>{dateFormatted(value?.createdAt)}</sub>
+												<sub className='ml-2]'>{!isEmpty(value.createdAt) ? dateFormatted(value?.createdAt) : ''}</sub>
 											</span>
 										</div>
 									</div>
 								))}
 							</div>
-					
+						</RenderIf>
+
 						{/* <div ref={containerRef}></div> */}
 
 						<div className='relative'>
+							{onMessage && (
+								<div>
+									<Lottie animationData={typingAnimation} loop={true} />
+									<p>Someone is typing....</p>
+								</div>
+							)}
 							<textarea className='-ml-1 border-none borderGray' name='message' value={inputMsg} cols={32} rows={1} placeholder='Input a message' onKeyDown={onKeyInputMsg} onChange={onInputMessage} onFocus={onActiceFocus}></textarea>
 
 							<RenderIf value={active}>

@@ -4,7 +4,7 @@ import { RootState, useAppDispatch, useAppSelector } from "../../../utils/redux/
 import React, { useCallback, useState } from "react";
 import RenderIf from "./render-if";
 import useNavigationHandler from "../../../utils/hooks/useNavigationHandler";
-import moment from "moment";
+
 import { useGetReceiveMessageQuery, useGetUnreadCountQuery, useUpdateMessageStatusMutation } from "../../../api-query/chat-api";
 import { useGetProfileAccountQuery } from "../../../api-query/account-api";
 import clsx from "clsx";
@@ -12,7 +12,7 @@ import { enqueueSnackbar } from "notistack";
 import { useChatToggle } from "../../../utils/hooks/globa.state";
 import { storeUserMessage } from "../../../utils/redux/slicer/chatUserDisplay";
 import { dateFormatted } from "../../../utils";
-import { UserMessageBubles } from "../../../api-query/types";
+
 import { storeChat } from "../../../utils/redux/slicer/chatSlice";
 
 const cardBox = [
@@ -46,49 +46,6 @@ const cardBox = [
 ]
 
 
-const userNotification = [
-	{
-		username: 'Denis',
-		message: 'hello',
-		date: '3/22/2024',
-	},
-	{
-		username: 'Monet',
-		message: 'how are you',
-		date: '4/01/2024',
-	},
-	{
-		username: 'Collen',
-		message: 'hows you doing',
-		date: '03/03/2024',
-	},
-	{
-		username: 'Dyesebel',
-		message: 'lover boy',
-		date: '03/02/2024',
-	},
-	{
-		username: 'Steve',
-		message: 'talking with you',
-		date: '03/01/2024',
-	},
-	{
-		username: 'Poe',
-		message: 'came to you',
-		date: '03/05/2024',
-	},
-	{
-		username: 'June',
-		message: 'i have done',
-		date: '02/02/2024',
-	},
-	{
-		username: 'Maine',
-		message: 'ennough',
-		date: '01/02/2024',
-	},
-];
-
 
 export const MessageNotificationUserBox: React.FC = () => {
 	const [notificationToggle, setNotificationToggle] = useState<boolean>(false);
@@ -99,26 +56,28 @@ export const MessageNotificationUserBox: React.FC = () => {
     const user = useAppSelector((state: RootState) => state.authUser);
 
 
-	const { data: accountUser } = useGetProfileAccountQuery(user?.id as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });	
+	const { data: accountUser } = useGetProfileAccountQuery(user?.id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });	
 	
-	
-	
-	const { data: getMessageNotifiacation } = useGetReceiveMessageQuery(accountUser?.account_id as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
+	const { data: unreadCount } = useGetUnreadCountQuery(accountUser?.account_id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
 
-	const { data: unreadCount } = useGetUnreadCountQuery(accountUser?.account_id as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
+	
+	const { data: getMessageNotifiacation } = useGetReceiveMessageQuery(accountUser?.account_id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+
+
 
 	const [updateMessageStatus] = useUpdateMessageStatusMutation();
+
 
 
 const dispatch = useAppDispatch();
 
 const onUserMessageBubble = useCallback(async (sender_id:string) => {
 
-	console.log(sender_id,'get sender id');
+
 	const statusUnread = {
-		sender_id: accountUser?.account_id as string,
-		receive_id: sender_id,
+		sender_id: sender_id,
+		receive_id: accountUser?.account_id as string
 	};
 
 	try {

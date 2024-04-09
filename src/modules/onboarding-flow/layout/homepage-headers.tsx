@@ -23,6 +23,8 @@ const Headers: React.FC = () => {
 		setToggle(!toggle);
 	}, [toggle]);
 
+
+	const route = user.role === 1 ? '/admin-dasboard' : '/user-dashboard';
 	return (
 		<>
 			<RenderIf value={!toggle}>
@@ -48,7 +50,7 @@ const Headers: React.FC = () => {
 								</li>
 								{!isEmpty(user.accessToken) && (
 									<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
-										<a className='hover:text-white' href='/user-dashboard'>
+										<a className='hover:text-white' href={route}>
 											DASHBOARD
 										</a>
 									</li>
@@ -56,9 +58,11 @@ const Headers: React.FC = () => {
 
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>ABOUT US</li>
 								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>CONTACT US</li>
-								<li>
-									<MessageNotificationUserBox />
-								</li>
+								{!isEmpty(user.accessToken) && (
+									<li>
+										<MessageNotificationUserBox />
+									</li>
+								)}
 								<li>
 									<AuthModal label='login' onOpen={onOpen}>
 										<div className='flex flex-col justify-center items-center gap-1'>

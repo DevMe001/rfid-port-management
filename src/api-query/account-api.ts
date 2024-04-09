@@ -23,7 +23,14 @@ export const accountProfileServices = createApi({
 			}),
 			invalidatesTags: ['Account'],
 		}),
+
+		getProfileAdminRole: builder.query<Account, undefined>({
+			query: () => '/account/role',
+			providesTags: ['Account'],
+			keepUnusedDataFor: 0,
+			
+		}),
 	}),
 });
 
-export const { useUpdateProfileAvatarMutation,useGetProfileAccountQuery } = accountProfileServices;
+export const { useUpdateProfileAvatarMutation,useGetProfileAccountQuery,useGetProfileAdminRoleQuery } = accountProfileServices;

@@ -10,7 +10,7 @@ import HomepageMain from './layout/homepage-main';
 import RenderIf from '../../common/components/ui/render-if';
 import FooterMd from './layout/homepage-footer-md';
 import FooterXS from './layout/homepage-footer-sm';
-import { onToggleNavHomepageMobile, useChatOnPoint, useGlobalUrlPath } from '../../utils/hooks/globa.state';
+import { onToggleNavHomepageMobile } from '../../utils/hooks/globa.state';
 import { isUndefined } from 'lodash';
 import Chatbot from '../buyers/chatbot';
 import LoaderSpinner from '../../common/widget/loader';
@@ -78,7 +78,7 @@ const HomePage:React.FC = () => {
 								await waitSec(3000);
 								setLoader(false);
 
-						 navigate(chatUrl.urlPath);
+						 navigate(chatUrl?.urlPath ?? '/user-dashboard');
 					}
 			 
 			} else {

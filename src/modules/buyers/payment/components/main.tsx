@@ -3,7 +3,7 @@ import LoaderSpinner from '../../../../common/widget/loader';
 import { useGlobaLoader } from '../../../../utils/hooks/globa.state';
 import  CheckVerification from '../../../../assets/check_verification.svg'
 import ErrorVerification from '../../../../assets/error_verification.svg';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import waitSec from '../../../../utils/setTimeout';
 import { usePaymentProcessMutation } from '../../../../api-query/payment-api';
 import { PaymentProcess } from '../../../../api-query/types';
