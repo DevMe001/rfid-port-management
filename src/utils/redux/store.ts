@@ -12,6 +12,7 @@ import { accountProfileServices } from '../../api-query/account-api';
 import { paymentService } from '../../api-query/payment-api';
 import { chatService } from '../../api-query/chat-api';
 import rootReducers from './combineReducer';
+import { rfidApiService } from '../../api-query/rfid-api';
 
 
 // create persistor key
@@ -46,6 +47,7 @@ const store = configureStore({
         accountProfileServices.middleware,
         paymentService.middleware,
         chatService.middleware,
+        rfidApiService.middleware,
         logger
     ),
     devTools:process.env.NODE_ENV != 'production'

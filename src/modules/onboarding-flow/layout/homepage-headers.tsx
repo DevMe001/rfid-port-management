@@ -24,7 +24,7 @@ const Headers: React.FC = () => {
 	}, [toggle]);
 
 
-	const route = user.role === 1 ? '/admin-dasboard' : '/user-dashboard';
+	const route = user.role === 1 ? '/admin-dashboard' : '/user-dashboard';
 	return (
 		<>
 			<RenderIf value={!toggle}>

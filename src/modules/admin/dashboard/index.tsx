@@ -1,20 +1,8 @@
-import withSnackbar from "../../../common/components/notistack";
 import DashboardMain from "../../../common/components/ui/main.ui.component"
-import Navigation from "../../../common/components/ui/navigation.ui.component"
-import Chatbot from "../../buyers/chatbot";
-
-const NavigationwithSnackbar = withSnackbar(Navigation);
+import withAdminWrapper from "../component/admin-wrapper"
 
 
 
-const Dasboard = () => {
-  return (
-		<div className='container-fluid'>
-			<NavigationwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />
-			<DashboardMain />
-			<Chatbot />
-		</div>
-	);
-}
+const Dashboard = withAdminWrapper(DashboardMain);
 
-export default Dasboard
+export default Dashboard;

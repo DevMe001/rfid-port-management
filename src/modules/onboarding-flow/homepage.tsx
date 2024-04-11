@@ -72,7 +72,7 @@ const HomePage:React.FC = () => {
 								await waitSec(3000);
 								setLoader(false);
 
-						navigate('/admin-dasboard');
+						navigate('/admin-dashboard');
 					}else{
 								setLoader(true);
 								await waitSec(3000);

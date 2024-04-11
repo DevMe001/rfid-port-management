@@ -11,6 +11,7 @@ import passengerReducers from './slicer/passengerSlice';
 import paymentReducers from './slicer/paymentSlice';
 import chatReducer from './slicer/chatSlice';
 import userMessageDisplayReducer from './slicer/chatUserDisplay';
+import { rfidApiService } from "../../api-query/rfid-api";
 
 const rtkAPI = {
 	[authService.reducerPath]: authService.reducer,
@@ -19,6 +20,7 @@ const rtkAPI = {
 	[paymentService.reducerPath]: paymentService.reducer,
 	[scheduleService.reducerPath]: scheduleService.reducer,
 	[chatService.reducerPath]: chatService.reducer,
+	[rfidApiService.reducerPath]: rfidApiService.reducer,
 };
 
 const slicer = {

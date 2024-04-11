@@ -10,6 +10,7 @@ import BuyerDashboard from '../modules/buyers/dashboard/user-dashboard';
 import BuyerBooking from '../modules/buyers/booking';
 import BuyerBookingById from '../modules/buyers/addbooking';
 import Payment from '../modules/buyers/payment';
+import RFIDSlot from '../modules/admin/rfid-slot';
 
 
 const LoginwithSnackbar = withSnackbar(Login);
@@ -63,10 +64,18 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard',
+				path: '/admin-dashboard',
 				element: (
 					<PrivateRoute>
 						<Dasboard />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/rfid-slot',
+				element: (
+					<PrivateRoute>
+						<RFIDSlot />
 					</PrivateRoute>
 				),
 			},

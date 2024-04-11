@@ -196,7 +196,10 @@ export interface Receiver {
   displayName?: string
 }
 
-
+export interface RFIDSlotDto {
+	rfid_id?: string;
+	rfid_number: string;
+}
 
 
 
