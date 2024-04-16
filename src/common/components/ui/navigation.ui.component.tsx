@@ -173,7 +173,7 @@ const Navigation:React.FC = ()=>{
 									<RenderDropdown list={[{ label: 'Personal Details', url: '/admin-dasboard/personal' }]} />
 								</RenderIf>
 								<RenderIf value={(list.wallet as boolean) && wallet}>
-									<RenderDropdown list={[{ label: 'Dock payment', url: '/admin-dasboard/ewallet' }]} />
+									<RenderDropdown list={[{ label: 'Dock payment', url: '/admin-dasboard/dock-payment' }]} />
 									<RenderDropdown list={[{ label: 'Account', url: '/admin-dasboard/ewallet' }]} />
 									<RenderDropdown list={[{ label: 'Payment Transaction', url: '/admin-dasboard/transaction' }]} />
 								</RenderIf>

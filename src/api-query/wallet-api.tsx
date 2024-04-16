@@ -22,6 +22,7 @@ export type WalletPollingParams = {
 type WalletParams={
 	terms:string;
 	code:string;
+	personal_id:string;
 }
 
 export const walletApiService = createApi({
@@ -54,8 +55,8 @@ export const walletApiService = createApi({
 			invalidatesTags: ['Wallet'],
 		}),
 		getVerifyBalanceAccount: builder.mutation<WalleteReturnMutation, WalletParams>({
-			query: ({ terms, code }) => ({
-				url: `/wallet/${code}?terms=${terms}`,
+			query: ({ terms, code, personal_id }) => ({
+				url: `/wallet/${code}?terms=${terms}&personal_id=${personal_id}`,
 				method: 'GET',
 				providesTags: ['Wallet'],
 				keepUnusedDataFor: 0,

@@ -19,6 +19,7 @@ import UserControl from '../modules/admin/users';
 import PersonalDetails from '../modules/admin/users/personal';
 import Wallet from '../modules/admin/wallet';
 import VehicleTypeCategories from '../modules/admin/vehicle/categories';
+import PaymentTransaction from '../modules/admin/dock-payment';
 
 
 
@@ -174,6 +175,14 @@ const Router = createBrowserRouter([
 				element: (
 					<PrivateRoute>
 						<Wallet />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/dock-payment',
+				element: (
+					<PrivateRoute>
+						<PaymentTransaction />
 					</PrivateRoute>
 				),
 			},

@@ -22,11 +22,11 @@ import CustomButton from '../../../common/components/ui/button.componetnt';
 import PassengerFormDetails from './components/passenger-form.component';
 import { GiCargoShip } from 'react-icons/gi';
 import Immutable from '../../../immutable/constant';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGetBookingScheduleByIdQuery } from '../../../api-query/schedule-list.api';
 import dateArrival from '../../../utils/dateFormat';
 import { enqueueSnackbar } from 'notistack';
-import { storePassengerForm } from '../../../utils/redux/slicer/passengerformSlice';
+import { resetPassengerForm, storePassengerForm } from '../../../utils/redux/slicer/passengerformSlice';
 import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import displayFullName from '../../../utils';
 
@@ -218,6 +218,7 @@ const BookingById:React.FC = () => {
 
 
 
+	const navigate = useNavigate();
 		
 	const { data: scheduledSelected } = useGetBookingScheduleByIdQuery(params.bookId as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
 
@@ -788,7 +789,7 @@ const OnRFIDScannerShow = (e: React.MouseEvent<HTMLDivElement, MouseEvent>)=>{
 		setPayModal(false);
 		document.body.style.overflow = '';
 		setScan('');
-	}, []);
+	}, [setScan]);
 
 
 	
@@ -841,66 +842,69 @@ const OnRFIDWalletCheck = useCallback(
 	async () => {
 
 		console.log(scannedValue);
+		console.log(userProfileDetails?.personal_id);
 
 		const data = {
 			terms:scan,
-			code:codeInput
+			code:codeInput,
+			personal_id:userProfileDetails?.personal_id as string
 		}
 		const res:any = await getVerifyBalanceAccount(data);
 
 	let totalAmount = Number(Number(calculatePassengers()[1]) + Number(calculatePassengersVehicle()[1])).toFixed(2);
 
-	
-		if (res.data.message === 'valid') {
-
+		if (res.data.message === 'illegal') {
+			enqueueSnackbar('Account number not linked to user', { variant: 'warning', autoHideDuration: 4000 });
+		} else if (res.data.message === 'valid') {
 			if (totalAmount <= res.data.balance) {
+				const amountDebit = Number(res.data.balance) - Number(totalAmount);
+				const passengerList = [...allPassengerList.seniorPassenger, ...allPassengerList.pwdPassenger, ...allPassengerList.studentPassengers, ...allPassengerList.childPassengers, ...allPassengerList.infantPassengers];
+				const seatListItem = passengerList.map((item) => item.seatPosition).join(', ');
 
-			
+				const walletId: string = res.data.walletId as string;
 
-								const amountDebit =(Number(res.data.balance) - Number(totalAmount));
-							const passengerList = [...allPassengerList.seniorPassenger, ...allPassengerList.pwdPassenger, ...allPassengerList.studentPassengers, ...allPassengerList.childPassengers, ...allPassengerList.infantPassengers];
-							const seatListItem = passengerList.map((item) => item.seatPosition).join(', ');
+				const paymentForms: PaymentWalletProcess = {
+					wallet_id: walletId,
+					balance: amountDebit,
+					passengers: passengerList,
+					booking: {
+						seat_numbers: seatListItem,
+						amount: paymetntWalletFormInput.amount,
+						service_charge: 40,
+						schedule_id: paymetntWalletFormInput.schedule_id,
+						vehicle_id: paymetntWalletFormInput.vehicle_id ?? '0',
+						status: 'pending',
+					},
+				};
 
-				    const walletId:string = res.data.walletId as string;
+				const paymentProcess = await paymentEwalletProcess({ ...paymentForms });
 
-							const paymentForms:PaymentWalletProcess = {
-								wallet_id:walletId,
-								balance:amountDebit,
-								passengers: passengerList,
-								booking: {
-									seat_numbers: seatListItem,
-									amount: paymetntWalletFormInput.amount,
-									service_charge: 40,
-									schedule_id: paymetntWalletFormInput.schedule_id,
-									vehicle_id: paymetntWalletFormInput.vehicle_id ?? '0',
-									status: 'pending',
-								},
-							};
+				if ('data' in paymentProcess) {
+					const msg: string = (paymentProcess.data as any).message as string;
 
-						
+					console.log(msg,'get message');
 
-					const paymentProcess = await paymentEwalletProcess({ ...paymentForms });
+					if (msg === 'payment success') {
+						enqueueSnackbar('Transaction completed', { variant: 'success', autoHideDuration: 4000 });
 
-						if ('data' in paymentProcess) {
-							const msg: string = paymentProcess.data.message as string;
-							if (msg === 'payment success') {
-								enqueueSnackbar('Transaction completed', { variant: 'success', autoHideDuration: 4000 });
-							} else {
-								enqueueSnackbar('Transaction failed', { variant: 'warning', autoHideDuration: 4000 });
-							}
-						} else {
-							// Handle the error case
-							enqueueSnackbar('Transaction failed', { variant: 'error', autoHideDuration: 4000 });
-						}
-
-
-
-
-			}else{
-			enqueueSnackbar('Insuficient fund', { variant: 'error', autoHideDuration: 4000 });
-
+						await waitSec(2000);
+						onCloseRfid();
+						dispatch(resetPassengerForm());
+						navigate('/booking');
+					} else {
+						enqueueSnackbar(msg, { variant: 'warning', autoHideDuration: 4000 });
+						await waitSec(2000);
+						onCloseRfid();
+						dispatch(resetPassengerForm());
+						navigate('/booking');
+					}
+				} else {
+					// Handle the error case
+					enqueueSnackbar('Transaction failed', { variant: 'error', autoHideDuration: 4000 });
+				}
+			} else {
+				enqueueSnackbar('Insuficient fund', { variant: 'error', autoHideDuration: 4000 });
 			}
-		
 		} else {
 			//337154
 			enqueueSnackbar('Invalid credentials', { variant: 'error', autoHideDuration: 4000 });
