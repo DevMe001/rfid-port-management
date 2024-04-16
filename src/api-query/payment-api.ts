@@ -1,6 +1,21 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { FetchBaseQueryError, createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import Immutable from "../immutable/constant";
-import { PaymentOrder, PaymentProcess } from "./types";
+import { PaymentOrder, PaymentProcess, PaymentWalletProcess } from "./types";
+import { SerializedError } from "@reduxjs/toolkit";
+
+
+type PaymentData = {
+	data: PaymentWalletProcess;
+};
+
+// Define the type for error handling
+type ErrorData = {
+	error: FetchBaseQueryError | SerializedError;
+};
+
+// Now you can use a union type to represent either the payment data or an error
+export type PaymentResult = PaymentData | ErrorData;
+
 
 export const paymentService = createApi({
 	reducerPath: 'payment-api',
@@ -24,7 +39,15 @@ export const paymentService = createApi({
 			}),
 			invalidatesTags: ['PAYMENT'],
 		}),
+		paymentEwalletProcess: builder.mutation<PaymentResult, Partial<PaymentWalletProcess>>({
+			query: (body) => ({
+				url: '/payment/wallet-process',
+				method: 'POST',
+				body,
+			}),
+			invalidatesTags: ['PAYMENT'],
+		}),
 	}),
 });
 
-export const {usePayOrderMutation,usePaymentProcessMutation} = paymentService;
+export const {usePayOrderMutation,usePaymentProcessMutation,usePaymentEwalletProcessMutation} = paymentService;

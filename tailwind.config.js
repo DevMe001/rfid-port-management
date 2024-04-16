@@ -18,6 +18,7 @@ export default {
 				navy: '#091B40',
 				dark: '#150710',
 				lite: '#F1F0E8',
+				active: '#2a2185',
 			},
 			animation: {
 				fade: 'fadeIn 1s ease-in-out',
@@ -40,7 +41,7 @@ export default {
 					'50%': { height: '5rem' },
 					'100%': { height: '8rem' },
 				},
-				
+
 				moveTop: {
 					'0%': {
 						top: '0',

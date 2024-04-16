@@ -5,13 +5,15 @@ interface Payment{
   amount:number;
 	schedule_id:string;
 	vehicle_id:string;
+	personal_id:string;
 }
 
 
 const initialState:Payment = {
   amount:0,
 	schedule_id:'',
-	vehicle_id:''
+	vehicle_id:'',
+	personal_id:''
 }
 
 

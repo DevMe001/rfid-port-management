@@ -1,7 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import withAdminWrapper from '../component/admin-wrapper'
 import { DashboardHeader } from '../../../common/components/ui/main.ui.component';
-import { Table, TextInput } from 'flowbite-react';
 import { isEmpty } from 'lodash';
 import PopupModal from '../../../common/widget/modal/popup.,modal';
 import CustomButton from '../../../common/components/ui/button.componetnt';
@@ -15,44 +14,14 @@ import { RFIDSlotDto } from '../../../api-query/types';
 import { enqueueSnackbar } from 'notistack';
 import waitSec from '../../../utils/setTimeout';
 import useDebounceRef from '../../../utils/hooks/useDebounce';
-import { FaSearch } from 'react-icons/fa';
+
 import usePagination from '../../../utils/hooks/usePagination';
+import TableRender from '../component/Table';
+import PaginationRender from '../component/Pagination';
+import SearchInput from '../component/Search';
+import Breadcrumbs from '../component/Breadcrumbs';
+import KebabMenu from '../component/KebabDropdown';
 
-type TableProps = {
-	header: string[];
-	body: (string | JSX.Element)[][];
-};
-
-const TableRender: React.FC<TableProps> = ({ header, body }) => {
-	return (
-		<Table striped hoverable>
-			<Table.Head>{!isEmpty(header) && header.map((head, index) => <Table.HeadCell key={index}>{head}</Table.HeadCell>)}</Table.Head>
-			<Table.Body className='divide-y'>
-				{!isEmpty(body) ? (
-					body.map((row, rowIndex) => (
-						<Table.Row key={rowIndex} className='bg-white dark:border-gray-700 dark:bg-gray-800'>
-							{row.map((cellContent, cellIndex) => (
-								<Table.Cell key={cellIndex} className='whitespace-nowrap font-medium text-gray-900 dark:text-white'>
-									{typeof cellContent === 'string' ? (
-										cellContent // If cellContent is already a string, render it as is
-									) : (
-										<>{cellContent}</> // If cellContent is JSX.Element, render it
-									)}
-								</Table.Cell>
-							))}
-						</Table.Row>
-					))
-				) : (
-					<Table.Row>
-						<Table.Cell className='text-center' colSpan={header.length}>
-							<p className='text-warning font-medium text-sm'> No data available</p>
-						</Table.Cell>
-					</Table.Row>
-				)}
-			</Table.Body>
-		</Table>
-	);
-};
 
 
 const AddNewRFIDScanner:React.FC = ()=>{
@@ -153,40 +122,10 @@ const handleScannerDevice = useCallback(
 	);
 }
 
-const OptimizeAddRfid = React.memo(AddNewRFIDScanner);
+export const OptimizeAddRfid = React.memo(AddNewRFIDScanner);
 
 
-type Pagination = {
-	prev: () => void;
-	currentPage: number;
-	totalPage: number;
-	next: () => void;
-};
 
-
-const RFIDPagination: React.FC<Pagination> = ({ prev, currentPage, totalPage,next }) => {
-	return (
-		<div className='w-full'>
-			<div className='flex justify-end pr-5 mt-5  shadow-sm'>
-				<div className='bg-white w-auto py-1 px-2 flex justify-between gap-3'>
-					<span className='font-medium cursor-pointer text-navy' onClick={prev}>
-						Prev
-					</span>
-					<span>|</span>
-					<span className='text-navy'>
-						<p className='text-center'>
-							Page {currentPage} / Page {totalPage}
-						</p>
-					</span>
-					<span>|</span>
-					<span className='font-medium cursor-pointer text-navy' onClick={next}>
-						Next
-					</span>
-				</div>
-			</div>
-		</div>
-	);
-};
 
 
 const RFIDSlot:React.FC = () => {
@@ -197,8 +136,7 @@ const RFIDSlot:React.FC = () => {
 const [deleteRfIdSlot] = useDeleteRfIdSlotMutation();
 
 	const onDeleteRfid = async(id:string)=>{
-			const res = await deleteRfIdSlot(id);
-			console.log(res);
+		 await deleteRfIdSlot(id);
 	}
 
 
@@ -230,7 +168,6 @@ const { paginatedData, handlePagination, currentPage, totalPages, setData } = us
 const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) => {
 	const value = e.target.value;
 	setFilter(value);
-	console.log(value);
 }, 200);
 
 
@@ -243,9 +180,7 @@ const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) =>
 	const body: (string | JSX.Element)[][] = paginatedData?.map((row: RFIDSlotDto) => [
 		String(row.rfid_id),
 		String(row.rfid_number),
-		<a onClick={() => onDeleteRfid(row?.rfid_id as string)} className='cursor-pointer'>
-			Delete
-		</a>,
+		<KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeleteRfid(row?.rfid_id as string) }]} />,
 	]);
 
 
@@ -256,21 +191,11 @@ const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) =>
 		<>
 			<div className='relative main !bg-lite'>
 				<DashboardHeader />
+				<Breadcrumbs group='Booking' activeLink='RFID slot' />
 				<div className='mt-10 w-[90%] mx-auto'>
-					<div className='flex justify-end items-center pr-5 pb-2 gap-2 my-5'>
-						<TextInput type='search' placeholder='Search' className='rounded !outline-none !border-none' onChange={onFilterQuery} />
-						<CustomButton
-							onClick={onSubmitHandler}
-							label={
-								<p className='flex justify-center items-center gap-2'>
-									Search
-									<FaSearch />
-								</p>
-							}
-						/>
-					</div>
+					<SearchInput onSearch={onFilterQuery} onSubmit={onSubmitHandler} />
 					<TableRender header={header} body={body} />
-					<RFIDPagination prev={() => handlePagination('prev')} next={() => handlePagination('next')} currentPage={currentPage} totalPage={totalPages} />
+					<PaginationRender prev={() => handlePagination('prev')} next={() => handlePagination('next')} currentPage={currentPage} totalPage={totalPages} />
 
 					<div className='flex justify-end pr-5 mt-10'>
 						<CustomButton onClick={onRFIdHandler} label={<p className='text-3xl'>+</p>} className='rounded-full w-[4rem] h-[4rem] bg-accent text-white !outline-none !border-none hover:bg-white hover:text-navy' />

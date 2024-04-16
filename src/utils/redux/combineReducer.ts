@@ -12,6 +12,11 @@ import paymentReducers from './slicer/paymentSlice';
 import chatReducer from './slicer/chatSlice';
 import userMessageDisplayReducer from './slicer/chatUserDisplay';
 import { rfidApiService } from "../../api-query/rfid-api";
+import { vehiclesApiService } from "../../api-query/vehicle-api";
+import { walletApiService } from "../../api-query/wallet-api";
+import { vehicleCategorieServiceApi } from '../../api-query/vehiclescategory-services';
+import { passengerApiService } from "../../api-query/passengerapi-service";
+import { bookingApiService } from "../../api-query/bookingapi-service";
 
 const rtkAPI = {
 	[authService.reducerPath]: authService.reducer,
@@ -21,6 +26,11 @@ const rtkAPI = {
 	[scheduleService.reducerPath]: scheduleService.reducer,
 	[chatService.reducerPath]: chatService.reducer,
 	[rfidApiService.reducerPath]: rfidApiService.reducer,
+	[vehiclesApiService.reducerPath]: vehiclesApiService.reducer,
+	[walletApiService.reducerPath]: walletApiService.reducer,
+	[vehicleCategorieServiceApi.reducerPath]: vehicleCategorieServiceApi.reducer,
+	[passengerApiService.reducerPath]: passengerApiService.reducer,
+	[bookingApiService.reducerPath]: bookingApiService.reducer
 };
 
 const slicer = {

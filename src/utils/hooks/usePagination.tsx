@@ -27,7 +27,7 @@ const usePagination = <T,>(data: T[], pageSize: number): UsePaginationProps<T> =
 
 	const getTotalPages = !isEmpty(data) ? () => Math.ceil(data.length / pageSize) : () => 0; 
 
-	const paginatedData = !isEmpty(data) ? recentData.slice((currentPage - 1) * pageSize, currentPage * pageSize) : [];
+	const paginatedData = !isEmpty(data) ? recentData?.slice((currentPage - 1) * pageSize, currentPage * pageSize) : [];
 
 	return { handlePagination, currentPage, totalPages: getTotalPages(), paginatedData, setData };
 };

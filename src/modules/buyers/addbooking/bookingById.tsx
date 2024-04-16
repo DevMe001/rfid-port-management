@@ -1,4 +1,4 @@
-import  React,{ useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import RenderIf from '../../../common/components/ui/render-if';
 import Stepper from '../../../common/widget/stepper';
 import { onActiveMode, onToggleBookingModal, onToggleNavHomepageMobile, useGlobaLoader } from '../../../utils/hooks/globa.state';
@@ -31,13 +31,17 @@ import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-deta
 import displayFullName from '../../../utils';
 
 import { BiRfid } from 'react-icons/bi';
-import { usePayOrderMutation } from '../../../api-query/payment-api';
-import { PaymentOrder } from '../../../api-query/types';
+import { PaymentResult, usePayOrderMutation, usePaymentEwalletProcessMutation } from '../../../api-query/payment-api';
+import { PaymentOrder, PaymentWalletProcess } from '../../../api-query/types';
 import LoaderSpinner from '../../../common/widget/loader';
 
 import dayjs from 'dayjs';
 import { storePayment } from '../../../utils/redux/slicer/paymentSlice';
-import InputFieldForm from '../../../common/components/ui/field-form';
+
+import { useGetVerifyBalanceAccountMutation } from '../../../api-query/wallet-api';
+
+import RFIDScannerDevice from '../../../common/components/ui/rfid-scanner';
+import { useGetSeatTakenQuery } from '../../../api-query/bookingapi-service';
 
 interface Passenger {
 	firstname: string;
@@ -200,7 +204,7 @@ const BookingById:React.FC = () => {
 	// const [displayError, setDisplayError] = useState<string>('');
 	const [seatChosen, selectedSeat] = useState<string>('');
 	const [seatCall, seatTagLine] = useState<number>(0);
-	const [seatArrNumber, setSeatNumberArr] = useState<string[]>([]);
+
 	const [selectedId, setSelectedId] = useState<string>('');
 	const [seatSelectedNumber, setSelectedSeatNumber] = useState<string>('');
 	const [getDisplayPassenger,setDisplayValue] = useState<any>({});
@@ -213,9 +217,26 @@ const BookingById:React.FC = () => {
 	const params = useParams();
 
 
+
 		
 	const { data: scheduledSelected } = useGetBookingScheduleByIdQuery(params.bookId as string, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
-	
+
+	const { data: getSeatTaken } = useGetSeatTakenQuery(undefined, { pollingInterval: 5000, refetchOnMountOrArgChange: true, skip: false });
+
+
+	const [seatArrNumber, setSeatNumberArr] = useState<any[]>(getSeatTaken?.data as unknown as string[] ?? []);
+
+
+
+useEffect(()=>{
+
+	if (getSeatTaken && getSeatTaken.data) {
+		setSeatNumberArr(getSeatTaken?.data as unknown as string[]);
+	}
+
+
+},[setSeatNumberArr,getSeatTaken])
+
 
 		const user = useAppSelector((state: RootState) => state.authUser);
 
@@ -610,37 +631,48 @@ function calculatePassengers(){
 		let countInfant = passenger.infant;
 		let terminalFee = 10;
 		let serviceFee = 10;
-		let discount  = 0.20;
-
+	
 
 		if(type === 'economy'){
-				senior = 757 * countSenior;
-				pwd = 757 * countPwd;
-				student = 848 * countStudent;
-				regular = 1060 * countRegular;
-				child = 530 * countChild;
-				infant = 60 * countInfant;
+				senior = countSenior > 0 ? (757 * countSenior) + (terminalFee + serviceFee) : 0;
+				pwd =  countPwd > 0 ? (757 * countPwd) + (terminalFee + serviceFee) : 0;
+				student = countStudent > 0 ? ( 848 * countStudent)  + (terminalFee + serviceFee) : 0;
+				regular =countRegular > 0 ?  (1060 * countRegular)  + (terminalFee + serviceFee) : 0;
+				child = countChild > 0 ? (530 * countChild)  + (terminalFee + serviceFee) : 0;
+				infant = countInfant > 0 ?  (60 * countInfant)  + (terminalFee + serviceFee) : 0;
+				
+				let discountedSenior = senior * 0.20;
+				let discountedPwd = pwd * 0.20;
 
+				senior = senior - discountedSenior;
+				pwd = pwd - discountedPwd;
+			
 		}
 		if(type === 'tourist'){
-				senior = 757 * countSenior;
-				pwd = 757 * countPwd;
-				student = 848 * countStudent;
-				regular = 1060 * countRegular;
-				child = 530 * countChild;
-				infant = 60 * countInfant;
+							senior = countSenior > 0 ? 757 * countSenior + (terminalFee + serviceFee) : 0;
+							pwd = countPwd > 0 ? 757 * countPwd + (terminalFee + serviceFee) : 0;
+							student = countStudent > 0 ? 848 * countStudent + (terminalFee + serviceFee) : 0;
+							regular = countRegular > 0 ? 1060 * countRegular + (terminalFee + serviceFee) : 0;
+							child = countChild > 0 ? 530 * countChild + (terminalFee + serviceFee) : 0;
+							infant = countInfant > 0 ? 60 * countInfant + (terminalFee + serviceFee) : 0;
+
+								let discountedSenior = senior * 0.2;
+								let discountedPwd = pwd * 0.2;
+
+								senior = senior - discountedSenior;
+								pwd = pwd - discountedPwd;
 		}
 
 		let displayFareRate = '';
 
-		let seniorDiscounted = (senior + terminalFee + serviceFee) * discount;
-		let pwdDiscounted = (pwd + terminalFee + serviceFee) * discount;
+
+
 
 		let passengerTotalList = [
-			{ label: 'senior ', count: countSenior, total: senior + terminalFee * serviceFee - seniorDiscounted },
-			{ label: 'pwd ', count: countPwd, total: (pwd + terminalFee * serviceFee) - pwdDiscounted },
+			{ label: 'senior ', count: countSenior, total: senior  },
+			{ label: 'pwd ', count: countPwd, total: pwd  },
 			{ label: ' student ', count: countStudent, total: student },
-			{ label: ' regular', count: countRegular, total: regular + terminalFee * serviceFee },
+			{ label: ' regular', count: countRegular, total: regular },
 			{ label: ' child', count: countChild, total: child },
 			{ label: ' infant', count: countInfant, total: infant },
 		];
@@ -659,6 +691,8 @@ function calculatePassengers(){
 
 }
 
+
+
 // payment process
 const onPaymentProcess = useCallback(() => {
 		window.scrollTo({
@@ -672,45 +706,214 @@ const onPaymentProcess = useCallback(() => {
 
 const onPaymentProceeed = useCallback(async()=>{
 
+
+
+
+				let totalAmount = Number(Number(calculatePassengers()[1]) + Number(calculatePassengersVehicle()[1])).toFixed(2);
+
+				if (Number(totalAmount) > 0) {
+					let getAddress = userProfileDetails?.address as string;
+					console.log(getAddress, 'get address');
+
+					let addressSplice = getAddress.split(' ');
+
+					const paymentForm: PaymentOrder = {
+						name: displayFullName(userProfileDetails?.firstname, userProfileDetails?.midlename, userProfileDetails?.lastname),
+						email: user?.email,
+						mobile: userProfileDetails?.mobileNumber as string,
+						description: 'Booking id 1234',
+						productName: 'Booking',
+						amount: Number(totalAmount),
+						address: {
+							city: `${addressSplice[0]} ${addressSplice[1]}`,
+							state: addressSplice[2],
+							postal_code: '3202',
+							country: 'PH',
+						},
+						booking_id: params.bookId as string,
+						personal_id: userProfileDetails?.personal_id as string,
+					};
+
+					console.log(params.bookId,'get booking it')
+
+					const paymentResponse: any = await payOrder({ ...paymentForm });
+
+						console.log(paymentResponse);
+
+					if (!paymentResponse.data.message.includes('Proceed')) {
+						enqueueSnackbar(paymentResponse.data.message, { variant: 'error', autoHideDuration: 3000 });
+					} else {
+						dispatch(
+							storePayment({
+								amount: Number(totalAmount),
+								schedule_id: getParamsSchedule?.schedule_id as string,
+								vehicle_id: getParamsSchedule?.vehicle.vehicle_id as string,
+								personal_id: userProfileDetails?.personal_id as string
+							}),
+						);
+
+						setLoader(true);
+
+						await waitSec(2000);
+
+						setLoader(false);
+
+					location.href = paymentResponse?.data.data?.attributes?.checkout_url;
+					}
+				}
+			
+
+		
+},[])
+
+const [scannerPaymentState,setPaymentRFIDState] = useState<boolean>(false);
+const [scanner, setScanner] = useState<boolean>(false);
+
+const [scan, setScan] = useState<string>('');
+const [scannedValue, setScanValue] = useState<string>('');
+const [codeInput,setCode] = useState<string>('');
+
+const inputRFIDRef = useRef<HTMLInputElement>(null);
+// use rfid features
+const OnRFIDScannerShow = (e: React.MouseEvent<HTMLDivElement, MouseEvent>)=>{
+	e.stopPropagation();
+	setPaymentRFIDState(true);
+	setPayModal(false);
+		document.body.style.overflow = 'hidden';
+		
+}
+
+	const onCloseRfid = useCallback(() => {
+		setPaymentRFIDState(false);
+		setPayModal(false);
+		document.body.style.overflow = '';
+		setScan('');
+	}, []);
+
+
+	
+	
+const [getVerifyBalanceAccount] = useGetVerifyBalanceAccountMutation();
+
+
+	let valueArr:string[] = [];
+
+const handlerScanningDevice = useCallback(
+	async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		valueArr.push(value);
+		setScanner(true);
+		await waitSec(2000);
+		setScanner(false);
+
+	
+
+		if(!isEmpty(value)){
+			
+		const getFinalValue = valueArr.join('');
+			
+			setScanValue(getFinalValue);
+			setScan(getFinalValue);
+		}
+		
+	},
+	[setScanner, setScan],
+);
+
+
+const handleRFIDCode = useCallback(
+	async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setCode(value);
+	},
+	[setCode],
+);
+
+
+
+// payment process for wallet 337154
+	const allPassengerList = useAppSelector((state: RootState) => state.passengerFormDetails);
+	const paymetntWalletFormInput = useAppSelector((state: RootState) => state.paymentProcess);
+
+	const [paymentEwalletProcess] = usePaymentEwalletProcessMutation();
+
+const OnRFIDWalletCheck = useCallback(
+	async () => {
+
+		console.log(scannedValue);
+
+		const data = {
+			terms:scan,
+			code:codeInput
+		}
+		const res:any = await getVerifyBalanceAccount(data);
+
 	let totalAmount = Number(Number(calculatePassengers()[1]) + Number(calculatePassengersVehicle()[1])).toFixed(2);
 
-		if (Number(totalAmount)  > 0) {
-			let getAddress = userProfileDetails?.address as string;
+	
+		if (res.data.message === 'valid') {
 
-			let addressSplice = getAddress.split(' ');
-			const paymentForm: PaymentOrder = {
-				name: displayFullName(userProfileDetails?.firstname, userProfileDetails?.midlename, userProfileDetails?.lastname),
-				email: user?.email,
-				mobile: userProfileDetails?.mobileNumber as string,
-				description: 'Booking id 1234',
-				productName: 'Booking 101',
-				amount: Number(totalAmount),
-				address: {
-					city: `${addressSplice[0]} ${addressSplice[1]}`,
-					state: addressSplice[2],
-					postal_code: '3202',
-					country: 'PH',
-				},
-				booking_id: params.bookId as string,
-			};
+			if (totalAmount <= res.data.balance) {
 
-			const paymentResponse: any = await payOrder({ ...paymentForm });
+			
 
-			dispatch(storePayment({
-				amount: Number(totalAmount),
-				schedule_id:getParamsSchedule?.schedule_id as string,
-				vehicle_id: getParamsSchedule?.vehicle.vehicle_id as string
-			}));
+								const amountDebit =(Number(res.data.balance) - Number(totalAmount));
+							const passengerList = [...allPassengerList.seniorPassenger, ...allPassengerList.pwdPassenger, ...allPassengerList.studentPassengers, ...allPassengerList.childPassengers, ...allPassengerList.infantPassengers];
+							const seatListItem = passengerList.map((item) => item.seatPosition).join(', ');
 
-			setLoader(true);
+				    const walletId:string = res.data.walletId as string;
 
-			await waitSec(2000);
+							const paymentForms:PaymentWalletProcess = {
+								wallet_id:walletId,
+								balance:amountDebit,
+								passengers: passengerList,
+								booking: {
+									seat_numbers: seatListItem,
+									amount: paymetntWalletFormInput.amount,
+									service_charge: 40,
+									schedule_id: paymetntWalletFormInput.schedule_id,
+									vehicle_id: paymetntWalletFormInput.vehicle_id ?? '0',
+									status: 'pending',
+								},
+							};
 
-			setLoader(false);
+						
 
-			location.href = paymentResponse?.data.data?.attributes?.checkout_url;
+					const paymentProcess = await paymentEwalletProcess({ ...paymentForms });
+
+						if ('data' in paymentProcess) {
+							const msg: string = paymentProcess.data.message as string;
+							if (msg === 'payment success') {
+								enqueueSnackbar('Transaction completed', { variant: 'success', autoHideDuration: 4000 });
+							} else {
+								enqueueSnackbar('Transaction failed', { variant: 'warning', autoHideDuration: 4000 });
+							}
+						} else {
+							// Handle the error case
+							enqueueSnackbar('Transaction failed', { variant: 'error', autoHideDuration: 4000 });
+						}
+
+
+
+
+			}else{
+			enqueueSnackbar('Insuficient fund', { variant: 'error', autoHideDuration: 4000 });
+
+			}
+		
+		} else {
+			//337154
+			enqueueSnackbar('Invalid credentials', { variant: 'error', autoHideDuration: 4000 });
 		}
-},[])
+		
+
+	},
+	[codeInput, scan],
+);
+
+
+// end payment prorcess
+
 
 
 const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEvent<HTMLInputElement>, selectedId: string, formikProps: FormikProps<any>) => {
@@ -867,24 +1070,24 @@ useEffect(() => {
 
 							console.log(values);
 
-							const seniorOverridePassenger = values.seniorPassenger.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] }));
-							const studentOverridePassenger = values.studentPassengers.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] }));
-							const regularOverridePassenger = values.regularPassengers.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] }));
-						
-						
+							const seniorOverridePassenger = values.seniorPassenger.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] ?? '0' }));
+							const studentOverridePassenger = values.studentPassengers.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] ?? '0' }));
+							const regularOverridePassenger = values.regularPassengers.map((item) => ({ ...item, vehicletype_id: item.vehicleChosen.vehicletype_id.split(',')[0] ?? '0' }));
+							const pwdOverridePassenger = values.pwdPassenger.map((item) => ({ ...item, vehicletype_id: '0' }));
+							const childOverridePassenger = values.childPassengers.map((item) => ({ ...item, vehicletype_id: '0' }));
+							const infantOverridePassenger = values.infantPassengers.map((item) => ({ ...item, vehicletype_id: '0' }));
 
 							const payload = {
 								isSubmitted: true,
 								seniorPassenger: seniorOverridePassenger,
-								pwdPassenger: values.pwdPassenger,
+								pwdPassenger: pwdOverridePassenger,
 								studentPassengers: studentOverridePassenger,
-								regularPassengers:regularOverridePassenger,
-								childPassengers: values.childPassengers,
-								infantPassengers: values.infantPassengers,
+								regularPassengers: regularOverridePassenger,
+								childPassengers: childOverridePassenger,
+								infantPassengers: infantOverridePassenger,
 							};
 
-					
-							 dispatch(storePassengerForm(payload));
+							dispatch(storePassengerForm(payload));
 
 							setDisplayValue(values);
 							// Add your submission logic here
@@ -908,8 +1111,6 @@ useEffect(() => {
 										{/* // @ts-ignore */}
 
 										<PassengerFormDetails identifyAs={`seniorPassenger.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.seniorPassenger[index].seatNumber} onSeatChosen={() => onSeat('seniorPassenger', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'seniorPassenger', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'seniorPassenger', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Senior'} onDateGetAge={(e) => onDateSetRetrival(e, `seniorPassenger.${index}`, formikProps)} />
-
-							
 									</div>
 								))}
 
@@ -925,7 +1126,7 @@ useEffect(() => {
 										{/* // @ts-ignore */}
 										<PassengerFormDetails identifyAs={`studentPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.studentPassengers[index].seatNumber} onSeatChosen={() => onSeat('studentPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'studentPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'studentPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Student'} onDateGetAge={(e) => onDateSetRetrival(e, `studentPassengers.${index}`, formikProps)} />
 
-										<InputFieldForm type='hidden' identifyAs={`studentPassengers.${index}`} fieldName='vehicletype_id' value={formikProps.values.seniorPassenger[index].vehicleChosen.vehicletype_id.split(',')[0] ?? undefined} />
+										{/* <InputFieldForm type='hidden' identifyAs={`studentPassengers.${index}`} fieldName='vehicletype_id' value={formikProps.values.seniorPassenger[index].vehicleChosen.vehicletype_id.split(',')[0] ?? undefined} /> */}
 									</div>
 								))}
 
@@ -933,7 +1134,7 @@ useEffect(() => {
 									<div key={`regulars-${index}`}>
 										{/* // @ts-ignore */}
 										<PassengerFormDetails identifyAs={`regularPassengers.${index}`} indexLabel={index ?? ''} seatNumber={formikProps.values.regularPassengers[index].seatNumber} onSeatChosen={() => onSeat('regularPassengers', index)} onPassengerVehicleAdd={() => onPassengerVehicle('add', 'regularPassengers', index, formikProps)} onPassengerVehicleRemove={() => onPassengerVehicle('remove', 'regularPassengers', index, formikProps)} vehicleCondition={passengerVehicle} passengerType={'Regular'} onDateGetAge={(e) => onDateSetRetrival(e, `regularPassengers.${index}`, formikProps)} />
-										<InputFieldForm type='hidden' identifyAs={`regularPassengers.${index}`} fieldName='vehicletype_id' value={formikProps.values.seniorPassenger[index].vehicleChosen.vehicletype_id.split(',')[0] ?? undefined} />
+										{/* <InputFieldForm type='hidden' identifyAs={`regularPassengers.${index}`} fieldName='vehicletype_id' value={formikProps.values.seniorPassenger[index].vehicleChosen.vehicletype_id.split(',')[0] ?? undefined} /> */}
 									</div>
 								))}
 
@@ -1106,7 +1307,7 @@ useEffect(() => {
 								</label>
 								<p className='font-normal'>
 									{' '}
-									&nbsp; &#8369; <span className='font-medium'>{Number(20)}%</span>
+									&nbsp; <span className='font-medium'>{Number(20)}%</span>
 								</p>
 							</div>
 						</RenderIf>
@@ -1148,7 +1349,7 @@ useEffect(() => {
 										</div>
 									</div>
 									<div>
-										<div className=' flex items-baseline gap-2 shadow-md p-10 bg-accent text-white rounded cursor-pointer'>
+										<div className=' flex items-baseline gap-2 shadow-md p-10 bg-accent text-white rounded cursor-pointer' onClick={OnRFIDScannerShow}>
 											<label htmlFor='buy' className='font-medium cursor-pointer'>
 												Use RFID
 											</label>
@@ -1161,6 +1362,15 @@ useEffect(() => {
 								</div>
 								<div style={{ clipPath: 'ellipse(40% 40% at 24% 21%)' }} className='absolute  left-0 top-0 right-0 bottom-0 w-[15rem] h-[15rem] bg-accent z-999'></div>
 								<div style={{ position: 'absolute', bottom: '0px', right: '0', zIndex: '0', clipPath: 'ellipse(41% 42% at 82% 87%)' }} className='w-[15rem] h-[15rem] bg-indigo-500'></div>
+							</PopupModal>
+						</RenderIf>
+
+						<RenderIf value={scannerPaymentState}>
+							<PopupModal onClose={onCloseRfid}>
+								<div className='p-2'>
+									{/* <p className='text-navy text-center text-xl my-2 break-words'>{scan}</p> */}
+									<RFIDScannerDevice scan={scan} handleEnableFocus={() => {}} scanning={scanner} inputRef={inputRFIDRef} handleScannerDevice={handlerScanningDevice} onCodeInput={handleRFIDCode} onSubmit={OnRFIDWalletCheck}/>;
+								</div>
 							</PopupModal>
 						</RenderIf>
 					</div>

@@ -13,6 +13,11 @@ import { paymentService } from '../../api-query/payment-api';
 import { chatService } from '../../api-query/chat-api';
 import rootReducers from './combineReducer';
 import { rfidApiService } from '../../api-query/rfid-api';
+import { vehiclesApiService } from '../../api-query/vehicle-api';
+import { walletApiService } from '../../api-query/wallet-api';
+import { vehicleCategorieServiceApi } from '../../api-query/vehiclescategory-services';
+import { passengerApiService } from '../../api-query/passengerapi-service';
+import { bookingApiService } from '../../api-query/bookingapi-service';
 
 
 // create persistor key
@@ -27,32 +32,30 @@ const persistorReducer = persistReducer(peristorConfig,rootReducers);
 
 // create stores configurations
 const store = configureStore({
-    reducer:persistorReducer,
-    middleware:(response) => response({
-        serializableCheck:{
-            ignoredActions:[
-                FLUSH,
-                REHYDRATE,
-                PAUSE,
-                PERSIST,
-                REGISTER,
-                PURGE
-            ]
-        }
-    }).concat(
-        // define midleware
-        authService.middleware,
-        scheduleService.middleware,
-        personalInformationService.middleware,
-        accountProfileServices.middleware,
-        paymentService.middleware,
-        chatService.middleware,
-        rfidApiService.middleware,
-        logger
-    ),
-    devTools:process.env.NODE_ENV != 'production'
-
-})
+	reducer: persistorReducer,
+	middleware: (response) =>
+		response({
+			serializableCheck: {
+				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, REGISTER, PURGE],
+			},
+		}).concat(
+			// define midleware
+			authService.middleware,
+			scheduleService.middleware,
+			personalInformationService.middleware,
+			accountProfileServices.middleware,
+			paymentService.middleware,
+			chatService.middleware,
+			rfidApiService.middleware,
+			vehiclesApiService.middleware,
+			walletApiService.middleware,
+			vehicleCategorieServiceApi.middleware,
+			passengerApiService.middleware,
+			bookingApiService.middleware,
+			logger,
+		),
+	devTools: process.env.NODE_ENV != 'production',
+});
 
 // invokes persistor store
 export const persistorStore:Persistor = persistStore(store)

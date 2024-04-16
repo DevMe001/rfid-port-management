@@ -1,6 +1,22 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import Immutable from '../immutable/constant';
-import { BookingSchedules, VehicleType } from './types';
+import { BookingSchedules, Schedules, VehicleType } from './types';
+
+export type ScheduleReturn={
+	data:Schedules[]
+}
+
+export type ScheduleReturnMutation = {
+	data: {
+		data: Schedules[];
+	};
+};
+ type SchedulePoolingParams={
+	pollingInterval:boolean;
+	refetchOnMountOrArgChange:boolean;
+	skip:boolean;
+ }
+
 
 export const scheduleService = createApi({
 	reducerPath: 'schedule',
@@ -14,7 +30,12 @@ export const scheduleService = createApi({
 			providesTags: ['Schedule'],
 			keepUnusedDataFor: 0,
 		}),
-		getBookingScheduleById: builder.query<BookingSchedules,  string>({
+		getBookingScheduleAdmin: builder.query<ScheduleReturn, SchedulePoolingParams | undefined>({
+			query: () => `schedule`,
+			providesTags: ['Schedule'],
+			keepUnusedDataFor: 0,
+		}),
+		getBookingScheduleById: builder.query<BookingSchedules, string>({
 			query: (scheduleId) => `schedule/${scheduleId}`,
 			providesTags: ['Schedule'],
 			keepUnusedDataFor: 0,
@@ -24,7 +45,23 @@ export const scheduleService = createApi({
 			providesTags: ['VehicleType'],
 			keepUnusedDataFor: 0,
 		}),
+		deleteScheduleById: builder.mutation<ScheduleReturn, string>({
+			query: (id) => ({
+				url: `/schedule/${id}`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Schedule'],
+		}),
+		getFilterSchedule: builder.mutation<ScheduleReturnMutation, string>({
+			query: (terms) => ({
+				url: `/schedule/search?terms=${terms}`,
+				method: 'GET',
+				providesTags: ['Schedule'],
+				keepUnusedDataFor: 0,
+			}),
+			invalidatesTags: ['Schedule'],
+		}),
 	}),
 });
 
-export const { useGetBookingScheduleQuery,useGetBookingVehicleTypeQuery,useGetBookingScheduleByIdQuery } = scheduleService;
+export const { useGetBookingScheduleQuery, useGetBookingVehicleTypeQuery, useGetBookingScheduleByIdQuery, useGetBookingScheduleAdminQuery, useDeleteScheduleByIdMutation, useGetFilterScheduleMutation } = scheduleService;

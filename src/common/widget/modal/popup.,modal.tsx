@@ -34,7 +34,6 @@ const PopupModal: React.FC<ModalProps> = ({ children, maxWidth, onClose }) => {
 
 	const handleContentClick = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
 		event.stopPropagation(); // Stop event propagation to prevent modal closure
-		setModal(!modal);
 	};
 
 	return (

@@ -27,3 +27,4 @@ export const useChatOnPoint = createGlobalState<boolean>(false);
 
 export const useGlobalUrlPath = createGlobalState<string>('/user-dashboard');
 
+export const onVehicleModal = createGlobalState<boolean>(false);

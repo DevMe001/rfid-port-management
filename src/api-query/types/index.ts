@@ -81,6 +81,7 @@ interface PaymentOrder extends Billing {
 	paymentType?: string[];
 	address: Address;
 	booking_id: string;
+	personal_id:string;
 }
 
 
@@ -92,7 +93,7 @@ type Wallet = {
 };
 
 
-interface Passenger extends Partial<VehiclePassenger> {
+export interface Passenger extends Partial<VehiclePassenger> {
 	passenger_id?: string;
 	firstname: string;
 	lastname: string;
@@ -119,7 +120,9 @@ export interface Booking {
 	vehicle_id?: string;
 	wallet_id: string;
 	status: Status;
+	passengers?:string
 }
+
 
 
 type Status = 'pending' | 'approved' | 'rejected' | string;
@@ -132,6 +135,8 @@ interface PaymentProcess {
 	ewallet: Wallet;
 	booking: Omit<Booking, 'wallet_id'>;
 };
+
+
 
 
 interface Chat{
@@ -202,6 +207,45 @@ export interface RFIDSlotDto {
 }
 
 
+export interface Vehicles {
+	vehicle_id: string;
+	vehicle_name: string;
+	vehicle_type:string;
+	vehicle_photo: string;
+	vehicle_price: string;
+}
 
 
-export type { BookingSchedules, VehicleType, PersonalInformation, UploadFile, AccountDetails,Account, PaymentOrder, PaymentProcess, Chat, MessageNotification, NewMessage, UnreadMessage, ReadMessage, UserMessageBubles };
+export interface Ewallet {
+	wallet_id: string;
+	account_number: string;
+	balance: string;
+	personal_id: string;
+};
+
+
+export interface Schedules {
+	schedule_id: string;
+	origin: string;
+	destination: string;
+	arrival_date: string;
+	vehicle_id: string;
+	vehicle: Partial<Vehicles>;
+}
+
+
+
+interface PaymentWalletProcess{
+	wallet_id: string;
+	balance: Wallet['balance'];
+	passengers: Omit<Passenger[], 'vehicleChosen'>;
+	booking: Omit<Booking, 'wallet_id'>;
+	message?:string;
+	
+}
+
+
+
+
+
+export type { PaymentWalletProcess, BookingSchedules, VehicleType, PersonalInformation, UploadFile, AccountDetails, Account, PaymentOrder, PaymentProcess, Chat, MessageNotification, NewMessage, UnreadMessage, ReadMessage, UserMessageBubles };

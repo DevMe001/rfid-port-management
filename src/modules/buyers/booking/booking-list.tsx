@@ -21,6 +21,7 @@ import CustomButton from '../../../common/components/ui/button.componetnt';
 import dateArrival from '../../../utils/dateFormat';
 import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import LoaderSpinner from '../../../common/widget/loader';
+import { storeChat } from '../../../utils/redux/slicer/chatSlice';
 
 
 interface PassengerType{
@@ -71,18 +72,18 @@ const BookingRecentList: React.FC = () => {
 		fare_type: '',
 	});
 
-	useEffect(() => {
-		async function init(){
-			if (isError || isPersonalInformationError) {
-			setLoader(true);
-			enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
-			await waitSec(3000);
-			setLoader(false);
-			navigate('/');
-		}
-		}
-		init();
-	}, [isError]);
+	// useEffect(() => {
+	// 	async function init(){
+	// 		if (isError || isPersonalInformationError) {
+	// 		setLoader(true);
+	// 		enqueueSnackbar('Access denied', { variant: 'error', autoHideDuration: 5000 });
+	// 		await waitSec(3000);
+	// 		setLoader(false);
+	// 		navigate('/');
+	// 	}
+	// 	}
+	// 	init();
+	// }, [isError]);
 
 	const onBooking = (schedule: BookingSchedules) => {
 		window.scrollTo({
@@ -95,9 +96,12 @@ const BookingRecentList: React.FC = () => {
 
 		if (isEmpty(user.accessToken)){
 			 onOpen();
+			 	dispatch(storeChat({ urlPath: '/booking' }));
 		}
 		else {
 			setBookingModal(!bookingModal)
+		
+
 		}
 	};
 

@@ -11,6 +11,16 @@ import BuyerBooking from '../modules/buyers/booking';
 import BuyerBookingById from '../modules/buyers/addbooking';
 import Payment from '../modules/buyers/payment';
 import RFIDSlot from '../modules/admin/rfid-slot';
+import Vehicle from '../modules/admin/vehicle';
+import Schedule from '../modules/admin/schedule';
+import BookingSchedule from '../modules/admin/booking-list';
+import Passengers from '../modules/admin/passengers';
+import UserControl from '../modules/admin/users';
+import PersonalDetails from '../modules/admin/users/personal';
+import Wallet from '../modules/admin/wallet';
+import VehicleTypeCategories from '../modules/admin/vehicle/categories';
+
+
 
 
 const LoginwithSnackbar = withSnackbar(Login);
@@ -76,6 +86,94 @@ const Router = createBrowserRouter([
 				element: (
 					<PrivateRoute>
 						<RFIDSlot />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/vehicle',
+				element: (
+					<PrivateRoute>
+						<Vehicle />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/vehicle/categories',
+				element: (
+					<PrivateRoute>
+						<VehicleTypeCategories />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/schedule',
+				element: (
+					<PrivateRoute>
+						<Schedule />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/schedule/:id',
+				element: (
+					<PrivateRoute>
+						<Schedule />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/booking',
+				element: (
+					<PrivateRoute>
+						<BookingSchedule />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/passenger',
+				element: (
+					<PrivateRoute>
+						<Passengers />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/user',
+				element: (
+					<PrivateRoute>
+						<UserControl />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/personal',
+				element: (
+					<PrivateRoute>
+						<PersonalDetails />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/personal/:id',
+				element: (
+					<PrivateRoute>
+						<PersonalDetails />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/ewallet',
+				element: (
+					<PrivateRoute>
+						<Wallet />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dasboard/ewallet/:id',
+				element: (
+					<PrivateRoute>
+						<Wallet />
 					</PrivateRoute>
 				),
 			},
