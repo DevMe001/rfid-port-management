@@ -10,6 +10,21 @@ export type QueryResultType = {
 	isError: boolean;
 };
 
+
+export type VehicleIds = {
+	vehicle_id: string;
+	vehicle_name: string;
+	vehicle_photo: string;
+};
+
+export type QueryResultTypeVehiclesId = {
+	data: Partial<VehicleIds[]>;
+	error: string | null;
+	isLoading: boolean;
+	isSuccess: boolean;
+	isError: boolean;
+};
+
 interface QueryOptionsWithPolling  {
 	pollingInterval?: number;
 	refetchOnMountOrArgChange?: boolean;
@@ -26,6 +41,11 @@ export const vehiclesApiService = createApi({
 	endpoints: (builder) => ({
 		getVehicleRecord: builder.query<QueryResultType, QueryOptionsWithPolling | undefined>({
 			query: () => '/vehicles',
+			providesTags: ['Vehicles'],
+			keepUnusedDataFor: 0,
+		}),
+		getVehicleIdList: builder.query<QueryResultTypeVehiclesId, QueryOptionsWithPolling | undefined>({
+			query: () => '/vehiclesIds',
 			providesTags: ['Vehicles'],
 			keepUnusedDataFor: 0,
 		}),
@@ -56,5 +76,5 @@ export const vehiclesApiService = createApi({
 });
 
 
-export const {useGetVehicleRecordQuery,useNewVehicleMutation,useUpdateVehicleMutation,useDeleteVehicleMutation} = vehiclesApiService;
+export const {useGetVehicleRecordQuery,useNewVehicleMutation,useUpdateVehicleMutation,useDeleteVehicleMutation,useGetVehicleIdListQuery} = vehiclesApiService;
 

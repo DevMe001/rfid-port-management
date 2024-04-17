@@ -17,6 +17,12 @@ export type ScheduleReturnMutation = {
 	skip:boolean;
  }
 
+ export interface PostSchedule {
+		origin: string;
+		destination?: string;
+		seatRange?: string;
+		vehicle_id?: string;
+ }
 
 export const scheduleService = createApi({
 	reducerPath: 'schedule',
@@ -61,7 +67,15 @@ export const scheduleService = createApi({
 			}),
 			invalidatesTags: ['Schedule'],
 		}),
+		newSchedule: builder.mutation<ScheduleReturnMutation, PostSchedule>({
+			query: (body) => ({
+				url: `/schedule`,
+				method: 'POST',
+				body,
+			}),
+			invalidatesTags: ['Schedule'],
+		}),
 	}),
 });
 
-export const { useGetBookingScheduleQuery, useGetBookingVehicleTypeQuery, useGetBookingScheduleByIdQuery, useGetBookingScheduleAdminQuery, useDeleteScheduleByIdMutation, useGetFilterScheduleMutation } = scheduleService;
+export const { useNewScheduleMutation, useGetBookingScheduleQuery, useGetBookingVehicleTypeQuery, useGetBookingScheduleByIdQuery, useGetBookingScheduleAdminQuery, useDeleteScheduleByIdMutation, useGetFilterScheduleMutation } = scheduleService;

@@ -15,7 +15,7 @@ import PopupModal from '../../../common/widget/modal/popup.,modal';
 import KebabMenu from '../component/KebabDropdown';
 import PaginationRender from '../component/Pagination';
 import * as Yup from 'yup';
-import { ErrorMessage, Field, FieldProps, Formik, Form, useFormikContext } from 'formik';
+import { ErrorMessage, Field, FieldProps, Formik, Form } from 'formik';
 import { Button, TextInput } from 'flowbite-react';
 import { FaSave, FaRegUserCircle } from 'react-icons/fa';
 import { isNull, isEmpty } from 'lodash';
@@ -75,7 +75,7 @@ const AddNewVehicle = ()=>{
 		
 				await localforage.removeItem('uplaoded');
 					
-
+		setVehcile(false);
 			
 	};
 
@@ -138,7 +138,7 @@ const AddNewVehicle = ()=>{
 								<label htmlFor='vehicle_type' className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'>
 									Vehicle name
 								</label>
-								<Field name='vehicle_name'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} rightIcon={FaRegUserCircle} color='info' style={{ maxWidth: '100%' }} id='fullname' type='text' placeholder='' />}</Field>
+								<Field name='vehicle_name'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} color='info' style={{ maxWidth: '100%' }} id='fullname' type='text' placeholder='' />}</Field>
 
 								<ErrorMessage
 									name='vehicle_name'
@@ -154,7 +154,7 @@ const AddNewVehicle = ()=>{
 								<label htmlFor='vehicle_price' className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'>
 									Vehicle price
 								</label>
-								<Field name='vehicle_price'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} rightIcon={FaRegUserCircle} color='info' style={{ maxWidth: '100%' }} id='fullname' type='text' placeholder='' />}</Field>
+								<Field name='vehicle_price'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field}  color='info' style={{ maxWidth: '100%' }} id='fullname' type='text' placeholder='' />}</Field>
 
 								<ErrorMessage
 									name='vehicle_price'
