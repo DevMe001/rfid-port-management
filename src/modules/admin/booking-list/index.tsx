@@ -50,8 +50,8 @@ const BookingSchedule: React.FC = () => {
 	const body: (string | JSX.Element)[][] = paginatedData?.map((row) => [
 		String(row.book_id),
 		 <span>{row.passengers}</span>,
-		  <a href={`/admin-dasboard/schedule/${row.schedule_id}`}>{row.schedule_id}</a>, 
-		 <a href={`/admin-dasboard/ewallet/${row.wallet_id}`}>{row.wallet_id}</a>, 
+		  <a href={`/admin-dashboard/schedule/${row.schedule_id}`}>{row.schedule_id}</a>, 
+		 <a href={`/admin-dashboard/ewallet/${row.wallet_id}`}>{row.wallet_id}</a>, 
 			<span>&#8369; {row.amount}</span>,
 			<span>{row.status}</span>,
 			 <KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeleteBooking(row?.book_id as string) }]} />]);

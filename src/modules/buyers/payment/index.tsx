@@ -32,6 +32,7 @@ const Payment: React.FC = () => {
 	const paymentForm = useAppSelector((state: RootState) => state.paymentProcess);
 	const locatePath = location.pathname.split('/')[2];
 	const [rfIDCode,setCode] = useState<string>('');
+	const [acct, setaccount] = useState<string>('');
 	
 	const params = useParams();
 
@@ -85,7 +86,8 @@ const Payment: React.FC = () => {
 				setStatus('Completed');	
 				await waitSec(2000);
 				setCode(paymentSend?.data?.code as string);
-				//  dispatch(resetPassengerForm());
+				setaccount(paymentSend?.data?.rfid as string);
+				 dispatch(resetPassengerForm());
 				// navigate(`/booking`);
 
 			}
@@ -112,7 +114,7 @@ const Payment: React.FC = () => {
 	return (
 		<div className='relative grid xs:grid-cols-1 sm:grid-cols-1 md:grid-cols-1 max-w-[90rem] mx-auto h-screen sm:h-[100%]' style={{ gridTemplateRows: '10vh repeat(2,1fr) 10vh' }}>
 			<Headers />
-			<PaymentBox status={status} rfIDCode={rfIDCode}/>
+			<PaymentBox status={status} rfIDCode={rfIDCode} account={acct} />
 			<RenderIf value={!toggle}>
 				<FooterMd />
 				<FooterXS />

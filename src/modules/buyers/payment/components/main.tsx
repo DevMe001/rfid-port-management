@@ -9,10 +9,11 @@ import { isEmpty } from 'lodash';
 type PaymentProps = {
 	status: string;
 	rfIDCode:string;
+	account:string;
 };
 
 
-const PaymentDetails: React.FC<PaymentProps> = ({ status, rfIDCode }) => {
+const PaymentDetails: React.FC<PaymentProps> = ({ status, rfIDCode, account }) => {
 	const [loader] = useGlobaLoader();
 
 	return (
@@ -28,8 +29,14 @@ const PaymentDetails: React.FC<PaymentProps> = ({ status, rfIDCode }) => {
 						<p className='text-accent font-medium text-xl'>Please wait.....</p>
 					</RenderIf>
 					<RenderIf value={!isEmpty(rfIDCode)}>
-						
-						<p className='text-accent font-medium text-xl'><span className='font-bold mr-2'>Wallet pin code:</span>{rfIDCode}</p>
+						<p className='text-accent font-medium text-xl'>
+							<span className='font-bold mr-2'>Account number:</span>
+							{rfIDCode}
+						</p>
+						<p className='text-accent font-medium text-xl'>
+							<span className='font-bold mr-2'>Wallet pin code:</span>
+							{account}
+						</p>
 					</RenderIf>
 				</div>
 			</div>

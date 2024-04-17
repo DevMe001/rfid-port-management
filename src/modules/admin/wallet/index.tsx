@@ -103,7 +103,7 @@ const res =	await deleteWalletAccount(id);
 
 	const body: (string | JSX.Element)[][] = paginatedData?.map((row) => [
 		String(row.wallet_id),
-		<a href={`/admin-dasboard/personal/${row.personal_id}`}>{row.personal_id}</a>, 
+		<a href={`/admin-dashboard/personal/${row.personal_id}`}>{row.personal_id}</a>, 
 		String(row.account_number),
 		<span>&#8369; {String(row.balance)}</span>,
 		<KebabMenu
