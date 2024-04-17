@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import withAdminWrapper from '../component/admin-wrapper'
 import { DashboardHeader } from '../../../common/components/ui/main.ui.component';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNull } from 'lodash';
 import PopupModal from '../../../common/widget/modal/popup.,modal';
 import CustomButton from '../../../common/components/ui/button.componetnt';
 import RFID from '.././../../assets/dashboard/rfid_scanner.svg'
@@ -46,56 +46,49 @@ const AddNewRFIDScanner:React.FC = ()=>{
 	};
 
 
-let counter = 0;
+
+
+	let valueArr: string[] = [];
 
 const handleScannerDevice = useCallback(
 	async (e: React.ChangeEvent<HTMLInputElement>) => {
-		counter = 1;
 		const value = e.target.value;
+		valueArr.push(value);
 		setScanning(true);
-		setScan(value);
 		await waitSec(2000);
+		setScanning(false);
 
 		if (!isEmpty(value)) {
-		
-			try {
-				if (counter === 1) {
-					const data = { rfid_number: e.target.value };
+			const getFinalValue = valueArr.join('');
 
-					const res: any = await newRFIDSlot(data);
+			const data = { rfid_number: getFinalValue };
 
-					if ('data' in res) {
-						const message = res.data?.message as string;
-						const variant = message === 'existed' ? 'error' : 'success';
+			const res: any = await newRFIDSlot(data);
 
-					showNotification(message, variant);
-					}
-				}
-			} catch (error) {
-				console.error('Error:', error);
-			} finally {
-				setScanning(false);
-				setRfidModal(false);
-				setScan('');
-				counter = 0;
-			}
+			console.log(res, 'get response');
+			setRfidModal(false);
+			setScan('');
+
+			// Reset the value array
+			valueArr = [];
 		}
 	},
-	[],
+	[setScan],
 );
 
-	const showNotification = useCallback(
-		(message: string, variant: 'error' | "default" | "success" | "warning" | "info") => {
-			enqueueSnackbar(message, { variant, autoHideDuration: 3000 });
-		},
-		[enqueueSnackbar],
-	);
+
+
+	// const showNotification = useCallback(
+	// 	(message: string, variant: 'error' | "default" | "success" | "warning" | "info") => {
+	// 		enqueueSnackbar(message, { variant, autoHideDuration: 3000 });
+	// 	},
+	// 	[enqueueSnackbar],
+	// );
 
 		const onCloseRfid = useCallback(() => {
-				setRfidModal(false);
+			setRfidModal(false);
 			document.body.style.overflow = '';
-		
-		}, []);
+		}, [setRfidModal]);
 
 	return (
 		<RenderIf value={rfidModal}>
@@ -142,7 +135,7 @@ const [deleteRfIdSlot] = useDeleteRfIdSlotMutation();
 
 
 
-	const [rfidModal, setRfidModal] = onRfidModal();
+	const [, setRfidModal] = onRfidModal();
 
 	
 
@@ -159,8 +152,8 @@ const { paginatedData, handlePagination, currentPage, totalPages, setData } = us
 			behavior: 'smooth',
 		});
 		document.body.style.overflow = 'hidden';
-		setRfidModal(!rfidModal);
-	}, []);
+		setRfidModal(true);
+	}, [setRfidModal]);
 
 
 	const [filter,setFilter] = useState<string>('');

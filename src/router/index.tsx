@@ -1,7 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import ErrorPage from '../common/components/error-page';
 import Login from '../modules/onboarding-flow/login.module';
-import Dasboard from '../modules/admin/dashboard';
+import Dashboard from '../modules/admin/dashboard';
 import withSnackbar from '../common/components/notistack';
 import PrivateRoute from './private/protected-route';
 import PublicRoute from './public';
@@ -19,7 +19,8 @@ import UserControl from '../modules/admin/users';
 import PersonalDetails from '../modules/admin/users/personal';
 import Wallet from '../modules/admin/wallet';
 import VehicleTypeCategories from '../modules/admin/vehicle/categories';
-import PaymentTransaction from '../modules/admin/dock-payment';
+import PaymentRecordHistory from '../modules/admin/dock-payment';
+import PaymentTransaction from '../modules/admin/trasnaction';
 
 
 
@@ -45,7 +46,7 @@ const Router = createBrowserRouter([
 			{
 				path: '/login',
 				element: (
-					<PublicRoute url={'/admin-dasboard'}>
+					<PublicRoute url={'/admin-dashboard'}>
 						<LoginwithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />
 					</PublicRoute>
 				),
@@ -78,12 +79,12 @@ const Router = createBrowserRouter([
 				path: '/admin-dashboard',
 				element: (
 					<PrivateRoute>
-						<Dasboard />
+						<Dashboard />
 					</PrivateRoute>
 				),
 			},
 			{
-				path: '/admin-dasboard/rfid-slot',
+				path: '/admin-dashboard/rfid-slot',
 				element: (
 					<PrivateRoute>
 						<RFIDSlot />
@@ -91,7 +92,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/vehicle',
+				path: '/admin-dashboard/vehicle',
 				element: (
 					<PrivateRoute>
 						<Vehicle />
@@ -99,7 +100,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/vehicle/categories',
+				path: '/admin-dashboard/vehicle/categories',
 				element: (
 					<PrivateRoute>
 						<VehicleTypeCategories />
@@ -107,7 +108,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/schedule',
+				path: '/admin-dashboard/schedule',
 				element: (
 					<PrivateRoute>
 						<Schedule />
@@ -115,7 +116,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/schedule/:id',
+				path: '/admin-dashboard/schedule/:id',
 				element: (
 					<PrivateRoute>
 						<Schedule />
@@ -123,7 +124,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/booking',
+				path: '/admin-dashboard/booking',
 				element: (
 					<PrivateRoute>
 						<BookingSchedule />
@@ -131,7 +132,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/passenger',
+				path: '/admin-dashboard/passenger',
 				element: (
 					<PrivateRoute>
 						<Passengers />
@@ -139,7 +140,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/user',
+				path: '/admin-dashboard/user',
 				element: (
 					<PrivateRoute>
 						<UserControl />
@@ -147,7 +148,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/personal',
+				path: '/admin-dashboard/personal',
 				element: (
 					<PrivateRoute>
 						<PersonalDetails />
@@ -155,7 +156,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/personal/:id',
+				path: '/admin-dashboard/personal/:id',
 				element: (
 					<PrivateRoute>
 						<PersonalDetails />
@@ -163,7 +164,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/ewallet',
+				path: '/admin-dashboard/ewallet',
 				element: (
 					<PrivateRoute>
 						<Wallet />
@@ -171,7 +172,7 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/ewallet/:id',
+				path: '/admin-dashboard/ewallet/:id',
 				element: (
 					<PrivateRoute>
 						<Wallet />
@@ -179,7 +180,15 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
-				path: '/admin-dasboard/dock-payment',
+				path: '/admin-dashboard/dock-payment',
+				element: (
+					<PrivateRoute>
+						<PaymentRecordHistory />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dashboard/transaction',
 				element: (
 					<PrivateRoute>
 						<PaymentTransaction />

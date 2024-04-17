@@ -19,7 +19,7 @@ import PaginationRender from '../component/Pagination';
 
 
 const BookingSchedule: React.FC = () => {
-	const header = ['Booking Id','Passenger id','Schedule Id', 'Wallet Id','Amount', 'Action'];
+	const header = ['Booking Id','Passenger id','Schedule Id', 'Wallet Id','Amount','Status', 'Action'];
 
 	const { data: bookingRecord } = useGetBookignScheduleQuery(undefined, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
@@ -53,6 +53,7 @@ const BookingSchedule: React.FC = () => {
 		  <a href={`/admin-dasboard/schedule/${row.schedule_id}`}>{row.schedule_id}</a>, 
 		 <a href={`/admin-dasboard/ewallet/${row.wallet_id}`}>{row.wallet_id}</a>, 
 			<span>&#8369; {row.amount}</span>,
+			<span>{row.status}</span>,
 			 <KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeleteBooking(row?.book_id as string) }]} />]);
 
 	const [filter, setFilter] = useState<string>('');

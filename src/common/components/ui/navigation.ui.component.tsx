@@ -104,11 +104,15 @@ const Navigation:React.FC = ()=>{
     const [onHandlerNavigationEvent] = useNavigationHandler();
 		const [{ booking, settings, schedule,wallet }, dispatch] = useReducer(multipleReducerState, initialMultipleState);
 
-  
+		const navigate = useNavigate();
 
 		const onTabToggle = useCallback(
 			(label: string) => {
 				onHandlerNavigationEvent(label);
+
+			 if (label.toLowerCase().includes('dashboard')) {
+					navigate('/admin-dashboard');
+				}
 				if (label.toLowerCase().includes('booking')) {
 					dispatch({ type: 'booking' });
 				}
@@ -152,9 +156,9 @@ const Navigation:React.FC = ()=>{
 								<RenderIf value={(list.booking as boolean) && booking}>
 									<RenderDropdown
 										list={[
-											{ label: 'Booking Record', url: '/admin-dasboard/booking' },
-											{ label: 'RFID slot', url: '/admin-dasboard/rfid-slot' },
-											{ label: 'Passengers', url: '/admin-dasboard/passenger' },
+											{ label: 'Booking Record', url: '/admin-dashboard/booking' },
+											{ label: 'RFID slot', url: '/admin-dashboard/rfid-slot' },
+											{ label: 'Passengers', url: '/admin-dashboard/passenger' },
 										]}
 									/>
 								</RenderIf>
@@ -162,20 +166,20 @@ const Navigation:React.FC = ()=>{
 								<RenderIf value={(list.schedule as boolean) && schedule}>
 									<RenderDropdown
 										list={[
-											{ label: 'Schedule Record', url: '/admin-dasboard/schedule' },
-											{ label: 'Vehicle', url: '/admin-dasboard/vehicle' },
-											{ label: 'Vehicle Category', url: '/admin-dasboard/vehicle/categories' },
+											{ label: 'Schedule Record', url: '/admin-dashboard/schedule' },
+											{ label: 'Vehicle', url: '/admin-dashboard/vehicle' },
+											{ label: 'Vehicle Category', url: '/admin-dashboard/vehicle/categories' },
 										]}
 									/>
 								</RenderIf>
 								<RenderIf value={(list.setting as boolean) && settings}>
-									<RenderDropdown list={[{ label: 'User', url: '/admin-dasboard/user' }]} />
-									<RenderDropdown list={[{ label: 'Personal Details', url: '/admin-dasboard/personal' }]} />
+									<RenderDropdown list={[{ label: 'User', url: '/admin-dashboard/user' }]} />
+									<RenderDropdown list={[{ label: 'Personal Details', url: '/admin-dashboard/personal' }]} />
 								</RenderIf>
 								<RenderIf value={(list.wallet as boolean) && wallet}>
-									<RenderDropdown list={[{ label: 'Dock payment', url: '/admin-dasboard/dock-payment' }]} />
-									<RenderDropdown list={[{ label: 'Account', url: '/admin-dasboard/ewallet' }]} />
-									<RenderDropdown list={[{ label: 'Payment Transaction', url: '/admin-dasboard/transaction' }]} />
+									<RenderDropdown list={[{ label: 'Dock payment', url: '/admin-dashboard/dock-payment' }]} />
+									<RenderDropdown list={[{ label: 'Account', url: '/admin-dashboard/ewallet' }]} />
+									<RenderDropdown list={[{ label: 'Payment Transaction', url: '/admin-dashboard/transaction' }]} />
 								</RenderIf>
 							</>
 						))}

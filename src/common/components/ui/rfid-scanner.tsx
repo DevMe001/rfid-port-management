@@ -26,21 +26,23 @@ const RFIDScannerDevice: React.FC<ScannerProps> = ({ scan, handleEnableFocus, sc
 
 			<RenderIf value={!isEmpty(scan)}>
 				<div className='flex flex-col justify-center items-center'>
-					<TextInput name='code' onChange={onCodeInput} className='my-5' placeholder='Enter pin code'/>
+					<TextInput name='code' onChange={onCodeInput} className='my-5' placeholder='Enter pin code' />
 					<CustomButton label={'Submit'} onClick={onSubmit} className='my-5' />
 				</div>
 			</RenderIf>
 			<RenderIf value={isEmpty(scan)}>
-				<div className='flex  justify-center items-center'>
-					<div
-						className={clsx({
-							'rfid-scanner': scanning,
-						})}
-					>
-						<img src={RFID} alt='rfid' />
+				<label htmlFor='rfidscanner'>
+					<div className='flex  justify-center items-center'>
+						<div
+							className={clsx({
+								'rfid-scanner': scanning,
+							})}
+						>
+							<img src={RFID} alt='rfid' />
+						</div>
 					</div>
-				</div>
-				<input ref={inputRef} value={scan} type='text' className='visually-hidden' onChange={handleScannerDevice} autoFocus={true} />
+				</label>
+				<input id='rfidscanner' ref={inputRef} value={scan} type='text' className='visually-hidden' onChange={handleScannerDevice} autoFocus={true} />
 			</RenderIf>
 		</div>
 	);

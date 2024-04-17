@@ -17,6 +17,7 @@ import { walletApiService } from "../../api-query/wallet-api";
 import { vehicleCategorieServiceApi } from '../../api-query/vehiclescategory-services';
 import { passengerApiService } from "../../api-query/passengerapi-service";
 import { bookingApiService } from "../../api-query/bookingapi-service";
+import { transactionService } from "../../api-query/transaction.api.services";
 
 const rtkAPI = {
 	[authService.reducerPath]: authService.reducer,
@@ -30,7 +31,8 @@ const rtkAPI = {
 	[walletApiService.reducerPath]: walletApiService.reducer,
 	[vehicleCategorieServiceApi.reducerPath]: vehicleCategorieServiceApi.reducer,
 	[passengerApiService.reducerPath]: passengerApiService.reducer,
-	[bookingApiService.reducerPath]: bookingApiService.reducer
+	[bookingApiService.reducerPath]: bookingApiService.reducer,
+	[transactionService.reducerPath]: transactionService.reducer
 };
 
 const slicer = {

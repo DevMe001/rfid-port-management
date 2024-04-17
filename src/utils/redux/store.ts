@@ -18,6 +18,7 @@ import { walletApiService } from '../../api-query/wallet-api';
 import { vehicleCategorieServiceApi } from '../../api-query/vehiclescategory-services';
 import { passengerApiService } from '../../api-query/passengerapi-service';
 import { bookingApiService } from '../../api-query/bookingapi-service';
+import { transactionService } from '../../api-query/transaction.api.services';
 
 
 // create persistor key
@@ -52,6 +53,7 @@ const store = configureStore({
 			vehicleCategorieServiceApi.middleware,
 			passengerApiService.middleware,
 			bookingApiService.middleware,
+			transactionService.middleware,
 			logger,
 		),
 	devTools: process.env.NODE_ENV != 'production',

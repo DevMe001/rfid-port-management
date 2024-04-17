@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useState } from 'react'
 import withAdminWrapper from '../component/admin-wrapper'
 import { DashboardHeader } from '../../../common/components/ui/main.ui.component';
-import { isEmpty } from 'lodash';
+import { isEmpty, startCase } from 'lodash';
 import PopupModal from '../../../common/widget/modal/popup.,modal';
 import CustomButton from '../../../common/components/ui/button.componetnt';
 import RFID from '.././../../assets/dashboard/rfid_scanner.svg'
@@ -21,20 +21,19 @@ import PaginationRender from '../component/Pagination';
 import SearchInput from '../component/Search';
 import Breadcrumbs from '../component/Breadcrumbs';
 import KebabMenu from '../component/KebabDropdown';
+import { PaymentHistory, useDeleteTransactionMutation, useGetPaymentHistoryQuery, usePostTransactionMutation } from '../../../api-query/transaction.api.services';
 
 
 
-const AddNewRFIDScanner:React.FC = ()=>{
 
-	const [scan,setScan] = useState<string>('');
-	const [scanning,setScanning] = useState<boolean>(false);
-		const [rfidModal, setRfidModal] = onRfidModal();
+const AddNewRFIDScanner: React.FC = () => {
+	const [scan, setScan] = useState<string>('');
+	const [scanning, setScanning] = useState<boolean>(false);
+	const [rfidModal, setRfidModal] = onRfidModal();
 
 	const inputRef = useRef<HTMLInputElement>(null);
 
-
-	
-
+	const [postTransaction] = usePostTransactionMutation();
 
 	const handleEnableFocus = () => {
 		if (inputRef.current) {
@@ -44,77 +43,121 @@ const AddNewRFIDScanner:React.FC = ()=>{
 	};
 
 
+const [message, setMessage] = useState<string>('');
+
+let counter = 1;
+
+let valueArr:string[] = [];
+
 const handleScannerDevice = useCallback(
 	async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		setScanning(true);
 
+		valueArr.push(value);
+
+		await waitSec(2000);
+		setScanning(false);
+
+		if (!isEmpty(value)) {
+		
+			if (counter === 1) {
+				onResponse();
+				counter = 0;
+			}
+		}
 	},
-	[],
+	[], // Include setValueArr in the dependency array
 );
 
-	const showNotification = useCallback(
-		(message: string, variant: 'error' | "default" | "success" | "warning" | "info") => {
-			enqueueSnackbar(message, { variant, autoHideDuration: 3000 });
-		},
-		[enqueueSnackbar],
-	);
 
-		const onCloseRfid = useCallback(() => {
-				setRfidModal(false);
-			document.body.style.overflow = '';
-		
-		}, []);
+const onResponse = useCallback(async () => {
+	const data = { account_number: valueArr.join('') };
+
+	console.log(data);
+
+	const res: any = await postTransaction(data);
+
+	console.log(res.data.message);
+	setMessage(res.data.message as string);
+
+	setScan('');
+	valueArr = [];
+	await waitSec(2000);
+	setMessage('');
+	onCloseRfid();
+}, []);
+
+	// const showNotification = useCallback(
+	// 	(message: string, variant: 'error' | "default" | "success" | "warning" | "info") => {
+	// 		enqueueSnackbar(message, { variant, autoHideDuration: 3000 });
+	// 	},
+	// 	[enqueueSnackbar],
+	// );
+
+	const onCloseRfid = useCallback(() => {
+		setRfidModal(false);
+		document.body.style.overflow = '';
+	}, [setRfidModal]);
 
 	return (
 		<RenderIf value={rfidModal}>
 			<PopupModal maxWidth='max-w-full' onClose={onCloseRfid}>
 				<div className='p-2' onMouseEnter={handleEnableFocus}>
-					<p className='p-2 my-2 text-center font-medium'>{!isEmpty(scan) && !scanning ? 'Your RFID Number:' : !isEmpty(scan) && scanning ? 'Checking....' : 'Scan now'}</p>
-					<p className='text-navy text-center text-xl my-2 break-words'>
-						{scan} 
-					</p>
+					<RenderIf value={message !== ''}>
+						<p className={clsx('p-2 my-2 text-center font-medium text-red-500',{
+							'text-accent': message.includes('completed')
+						})}>{startCase(message)}</p>
+					</RenderIf>
+					<RenderIf value={message == ''}>
+						<p className='p-2 my-2 text-center font-medium'>{!isEmpty(scan) && !scanning ? 'Your RFID Number:' : !isEmpty(scan) && scanning ? 'Checking....' : 'Scan now'}</p>
+					</RenderIf>
 
-					<div className='flex justify-center items-center'>
-						<div
-							className={clsx({
-								'rfid-scanner': scanning,
-							})}
-						>
-							<img src={RFID} alt='rfid' />
+					<p className='text-navy text-center text-xl my-2 break-words'>{scan}</p>
+
+					<label htmlFor='scanner'>
+						<div className='relative flex justify-center items-center cursor-text'>
+							<div
+								className={clsx({
+									'rfid-scanner': scanning,
+								})}
+							>
+								<img src={RFID} alt='rfid' />
+							</div>
 						</div>
-					</div>
-					<input ref={inputRef} value={scan} type='text' className='visually-hidden' onChange={handleScannerDevice} autoFocus={true} />
+					</label>
+					<input id='scanner' ref={inputRef} value={scan} type='text' className='visually-hidden' onChange={handleScannerDevice} autoFocus={true} />
 				</div>
 			</PopupModal>
 		</RenderIf>
 	);
-}
+};
 
 export const OptimizeAddRfid = React.memo(AddNewRFIDScanner);
 
 
 
 
-
 const DockPayment:React.FC = () => {
-	const header = ['Payment ID', 'Wallet id', 'Balance','Amount','Total','Action']; // Define table headers
+	const header = ['Payment ID', 'wallet balance', 'booking amount','current balance','Action']; // Define table headers
 
 
-	const { data: getRFIDSlot } = useGetRfidSlotAvailableQuery(undefined,{ pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
-const [deleteRfIdSlot] = useDeleteRfIdSlotMutation();
+	const { data: getPaymentHistory } = useGetPaymentHistoryQuery(undefined, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+const [deleteTransaction] = useDeleteTransactionMutation();
 
-	const onDeleteRfid = async(id:string)=>{
-		 await deleteRfIdSlot(id);
-	}
-
-
+	const onDeletePaymentHistory = async (id: string) => {
+		await deleteTransaction(id);
+	};
 
 
-	const [rfidModal, setRfidModal] = onRfidModal();
+
+
+	const [, setRfidModal] = onRfidModal();
 
 	
 
 
-const { paginatedData, handlePagination, currentPage, totalPages, setData } = usePagination<RFIDSlotDto>(getRFIDSlot, 10);
+const { paginatedData, handlePagination, currentPage, totalPages, setData } = usePagination<PaymentHistory>(getPaymentHistory as unknown as PaymentHistory[], 10);
 
 
 
@@ -126,7 +169,7 @@ const { paginatedData, handlePagination, currentPage, totalPages, setData } = us
 			behavior: 'smooth',
 		});
 		document.body.style.overflow = 'hidden';
-		setRfidModal(!rfidModal);
+		setRfidModal(true);
 	}, []);
 
 
@@ -144,7 +187,12 @@ const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) =>
 	};
 
 	
-	const body: (string | JSX.Element)[][] = paginatedData?.map((row: RFIDSlotDto) => [String(row.rfid_id), String(row.rfid_number), String(row.rfid_number), String(row.rfid_number), String(row.rfid_number), <KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeleteRfid(row?.rfid_id as string) }]} />]);
+	const body: (string | JSX.Element)[][] = paginatedData?.map((row: PaymentHistory) => [
+		String(row.payment_id), 
+		String(row.wallet_balance), 
+		String(row.booking_amount), 
+		String(row.current_balance), 
+		 <KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeletePaymentHistory(row?.payment_id as string) }]} />]);
 
 
 
@@ -173,6 +221,6 @@ const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) =>
 	);
 }
 
-const PaymentTransaction = React.memo(DockPayment);
+const PaymentRecordHistory = React.memo(DockPayment);
 
-export default withAdminWrapper(PaymentTransaction);
+export default withAdminWrapper(PaymentRecordHistory);
