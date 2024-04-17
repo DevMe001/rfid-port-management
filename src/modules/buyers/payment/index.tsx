@@ -6,7 +6,7 @@ import { onToggleNavHomepageMobile, useGlobaLoader } from '../../../utils/hooks/
 import Headers from '../../onboarding-flow/layout/homepage-headers';
 import PaymentBox from './components/main';
 import { enqueueSnackbar } from 'notistack';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { usePaymentProcessMutation } from '../../../api-query/payment-api';
 import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import { PaymentProcess } from '../../../api-query/types';
@@ -33,6 +33,8 @@ const Payment: React.FC = () => {
 	const locatePath = location.pathname.split('/')[2];
 	const [rfIDCode,setCode] = useState<string>('');
 	
+	const params = useParams();
+
 
 	const paymentRequest = useCallback(async () => {
 	
@@ -54,7 +56,7 @@ const Payment: React.FC = () => {
 				seat_numbers: seatList,
 				amount: paymentForm.amount,
 				service_charge: 40,
-				schedule_id: paymentForm.schedule_id,
+				schedule_id: params.bookId as string,
 				vehicle_id: paymentForm.vehicle_id ?? '0',
 				status: 'pending',
 			},

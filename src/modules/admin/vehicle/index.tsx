@@ -20,6 +20,7 @@ import { Button, TextInput } from 'flowbite-react';
 import { FaSave, FaRegUserCircle } from 'react-icons/fa';
 import { isNull, isEmpty } from 'lodash';
 import { FaRegImage } from 'react-icons/fa6';
+import localforage from 'localforage';
 
 interface FormData {
 	vehicle_photo?: any;
@@ -55,6 +56,27 @@ const AddNewVehicle = ()=>{
 
 	const handleSubmitRequest = async (values: FormData) => {
 		console.log(values);
+
+		const file = await localforage.getItem('uplaoded');
+
+
+	
+
+		const formData = new FormData();
+		formData.append('vehicle_photo', file as unknown as File);
+		formData.append('vehicle_name', values.vehicle_name);
+		formData.append('vehicle_price', values.vehicle_price);
+		formData.append('vehicle_type', values.vehicle_type);
+
+
+		await newVehicle(formData);
+
+
+		
+				await localforage.removeItem('uplaoded');
+					
+
+			
 	};
 
 
@@ -62,6 +84,11 @@ const AddNewVehicle = ()=>{
 		if (!isNull(e.target.files)) {
 			try {
 				let getFile = e.target.files[0] as File;
+
+
+				await localforage.setItem('uplaoded', getFile)
+					
+
 	
 				const imageUrl = URL.createObjectURL(getFile);
 				setPreview(imageUrl);
@@ -94,43 +121,7 @@ const AddNewVehicle = ()=>{
 									<p className='font-medium'>Upload vehicle photo</p>
 									<div className='block'>
 										<Field name='vehicle_photo' type='file'>
-											{(fieldProps: FieldProps) => (
-												<input
-													{...fieldProps.field}
-													type='file'
-													id='photo'
-													className='hidden'
-													accept='image/*'
-													onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-														const file = e.target.files && e.target.files[0]; // Get the first file if it exists
-														if (file) {
-															try {
-																const imageUrl = URL.createObjectURL(file);
-																setPreview(imageUrl);
-
-																const reader = new FileReader();
-																if (reader) {
-																	reader.onload = function (event: ProgressEvent<FileReader>) {
-																		if (event.target && event.target.result && typeof event.target.result === 'string') {
-																			const imgTag = document.getElementById('myimage') as HTMLImageElement | null;
-																			if (imgTag) {
-																				imgTag.title = file.name;
-																				imgTag.src = event.target.result;
-																			}
-																		}
-																	};
-																	reader.readAsDataURL(file);
-																}
-
-																console.log(file, 'get file');
-																fieldProps.form.setFieldValue(fieldProps.field.name, file);
-															} catch (error) {
-																console.log(error);
-															}
-														}
-													}}
-												/>
-											)}
+											{(fieldProps: FieldProps) => <input {...fieldProps.field} type='file' id='photo' className='hidden' accept='image/*' onChange={onFileUpload} />}
 										</Field>
 
 										<ErrorMessage
