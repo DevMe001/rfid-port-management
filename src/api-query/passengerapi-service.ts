@@ -25,6 +25,11 @@ export  const passengerApiService = createApi({
 			providesTags: ['Passenger'],
 			keepUnusedDataFor: 0,
 		}),
+		getPassengerByMultipleId: builder.query<Passenger[], PassengerParams | string>({
+			query: (ids) => `/passengers/find?id=${ids}`,
+			providesTags: ['Passenger'],
+			keepUnusedDataFor: 0,
+		}),
 		deletePassengerById: builder.mutation<PassengerReturn, string>({
 			query: (id) => ({
 				url: `/passenger/${id}`,
@@ -34,4 +39,4 @@ export  const passengerApiService = createApi({
 	}),
 });
 
-export const { useGetAllPassengerItemQuery,useDeletePassengerByIdMutation } = passengerApiService;
+export const { useGetAllPassengerItemQuery,useDeletePassengerByIdMutation,useGetPassengerByMultipleIdQuery } = passengerApiService;

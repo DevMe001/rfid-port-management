@@ -1,3 +1,5 @@
+import moment from "moment";
+
 function dateArrival(arrivalSchedule: string): string {
 	const options: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
@@ -18,6 +20,8 @@ function dateArrival(arrivalSchedule: string): string {
 
 	return dateLocale.toLocaleString('en-US', options);
 }
+
+
 
 
 export default dateArrival;

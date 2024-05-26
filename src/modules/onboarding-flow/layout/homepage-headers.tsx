@@ -56,8 +56,18 @@ const Headers: React.FC = () => {
 									</li>
 								)}
 
-								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>ABOUT US</li>
-								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>CONTACT US</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
+									{' '}
+									<a className='hover:text-white' href={'/about-us'}>
+										ABOUT US
+									</a>
+								</li>
+								<li className='hover:text-lite hover:bg-navy hover:p-2 hover:rounded-md'>
+									{' '}
+									<a className='hover:text-white' href={'/contact-us'}>
+										CONTACT US
+									</a>
+								</li>
 								{!isEmpty(user.accessToken) && (
 									<li>
 										<MessageNotificationUserBox />

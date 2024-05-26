@@ -19,7 +19,7 @@ import PaginationRender from '../component/Pagination';
 
 
 const Passengers: React.FC = () => {
-	const header = ['Id','passenger name', 'Seat number','age','fare type', 'Action'];
+	const header = ['Id','passenger name', 'Seat number','age','fare type','Booking amount', 'Action'];
 
 	const { data: passengerRecord } = useGetAllPassengerItemQuery(undefined, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
@@ -57,7 +57,8 @@ const Passengers: React.FC = () => {
 		<span>{row.seatNumber}</span>,
 		<span>{row.age}</span>,
 		<span>{row.fare_type}</span>,
-		<KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeletPassenger(row?.passenger_id as string) }]} />,
+		<span>₱ {row.booking_amount}</span>,
+		<KebabMenu list={[{ label: 'Delete', onClick: () => onDeletPassenger(row?.passenger_id as string) }]} />,
 	]);
 
 	const [filter, setFilter] = useState<string>('');

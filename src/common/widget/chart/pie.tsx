@@ -15,9 +15,9 @@ export const options = {
 		title: {
 			display: true,
 			text: 'Total Counts',
+			font: { size: 25 },
 		},
 	},
-
 };
 
 
@@ -58,9 +58,9 @@ export function PieChart() {
 		};
 
 	return (
-		<div className='p-5' style={{ width: '80%', maxWidth: '100%', margin: '0 auto' }}>
+		<div className='p-5' style={{ width: '100%', maxWidth: '100%', margin: '0 auto', height: '100%' }}>
 			{/* Chart container */}
-			<div className='bg-white rounded p-5' style={{ width: '100%', height: '350px' }}>
+			<div className='bg-white rounded p-5' style={{ width: '100%', height: '100%' }}>
 				<Pie data={data} options={options} />
 			</div>
 		</div>

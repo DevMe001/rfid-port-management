@@ -21,6 +21,12 @@ import Wallet from '../modules/admin/wallet';
 import VehicleTypeCategories from '../modules/admin/vehicle/categories';
 import PaymentRecordHistory from '../modules/admin/dock-payment';
 import PaymentTransaction from '../modules/admin/trasnaction';
+import AboutUs from '../modules/onboarding-flow/about';
+import ContactUs from '../modules/onboarding-flow/contact';
+import PersonalDetailsById from '../modules/admin/users/personal/byId';
+import WalletIDAccount from '../modules/admin/wallet/byID';
+import TransactionDetailsPerBooking from '../modules/admin/trasnaction/ByID';
+import DockPay from '../modules/buyers/dock-payment';
 
 
 
@@ -31,6 +37,7 @@ const BuyerDashboardwithSnachbard = withSnackbar(BuyerDashboard);
 const BuyerBookingwithSnackbar = withSnackbar(BuyerBooking);
 const BuyerBookingByIdwithSnackbar = withSnackbar(BuyerBookingById);
 const PaymentwithSnackbar = withSnackbar(Payment);
+const DockPaywithSnackbar = withSnackbar(DockPay);
 
 
 
@@ -42,6 +49,18 @@ const Router = createBrowserRouter([
 			{
 				path: '/',
 				element: <HomewithSnachbard anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={5000} />,
+			},
+			{
+				path: '/about-us',
+				element: <AboutUs />,
+			},
+			{
+				path: '/pay',
+				element: <DockPaywithSnackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} autoHideDuration={3000} />,
+			},
+			{
+				path: '/contact-us',
+				element: <ContactUs />,
 			},
 			{
 				path: '/login',
@@ -164,6 +183,14 @@ const Router = createBrowserRouter([
 				),
 			},
 			{
+				path: '/admin-dashboard/personal/user/:id',
+				element: (
+					<PrivateRoute>
+						<PersonalDetailsById />
+					</PrivateRoute>
+				),
+			},
+			{
 				path: '/admin-dashboard/ewallet',
 				element: (
 					<PrivateRoute>
@@ -175,7 +202,7 @@ const Router = createBrowserRouter([
 				path: '/admin-dashboard/ewallet/:id',
 				element: (
 					<PrivateRoute>
-						<Wallet />
+						<WalletIDAccount />
 					</PrivateRoute>
 				),
 			},
@@ -192,6 +219,14 @@ const Router = createBrowserRouter([
 				element: (
 					<PrivateRoute>
 						<PaymentTransaction />
+					</PrivateRoute>
+				),
+			},
+			{
+				path: '/admin-dashboard/transaction/:id',
+				element: (
+					<PrivateRoute>
+						<TransactionDetailsPerBooking />
 					</PrivateRoute>
 				),
 			},

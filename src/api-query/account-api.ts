@@ -14,6 +14,18 @@ type AccountReturn={
 };
 
 
+export type AccountReturnMutation = {
+	data: {
+		data: AccountReturn[];
+	};
+};
+type AccountPoolingParams = {
+	pollingInterval: boolean;
+	refetchOnMountOrArgChange: boolean;
+	skip: boolean;
+};
+
+
 export const accountProfileServices = createApi({
 	reducerPath: 'account',
 	tagTypes: ['Account'],
@@ -45,7 +57,38 @@ export const accountProfileServices = createApi({
 			providesTags: ['Account'],
 			keepUnusedDataFor: 0,
 		}),
+
+		filterAccountDetails: builder.mutation<AccountReturnMutation, string>({
+			query: (query) => ({
+				url: `/account/search/${query}`,
+				method: 'GET',
+			}),
+			invalidatesTags: ['Account'],
+		}),
+		newAccountDetails: builder.mutation<AccountReturnMutation, FormData>({
+			query: (body) => ({
+				url: '/account/add',
+				method: 'POST',
+				body,
+			}),
+			invalidatesTags: ['Account'],
+		}),
+		updateAccountDetails: builder.mutation<AccountReturnMutation, FormData>({
+			query: (body) => ({
+				url: `/account/update`,
+				method: 'PATCH',
+				body,
+			}),
+			invalidatesTags: ['Account'],
+		}),
+		deleteAccountDetails: builder.mutation<AccountReturnMutation, string>({
+			query: (account_id) => ({
+				url: `/account/destroy/${account_id}`,
+				method: 'DELETE',
+			}),
+			invalidatesTags: ['Account'],
+		}),
 	}),
 });
 
-export const { useUpdateProfileAvatarMutation,useGetProfileAccountQuery,useGetProfileAdminRoleQuery,useGetAccountsQuery } = accountProfileServices;
+export const {useDeleteAccountDetailsMutation, useUpdateProfileAvatarMutation,useGetProfileAccountQuery,useGetProfileAdminRoleQuery,useGetAccountsQuery,useNewAccountDetailsMutation,useUpdateAccountDetailsMutation,useFilterAccountDetailsMutation } = accountProfileServices;

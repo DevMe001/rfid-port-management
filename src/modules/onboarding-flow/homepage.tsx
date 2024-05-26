@@ -5,21 +5,13 @@ import { addUser } from '../../utils/redux/slicer/authSlice';
 import waitSec from '../../utils/setTimeout';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { RootState, useAppDispatch, useAppSelector } from '../../utils/redux/store';
-import Headers from './layout/homepage-headers';
 import HomepageMain from './layout/homepage-main';
-import RenderIf from '../../common/components/ui/render-if';
-import FooterMd from './layout/homepage-footer-md';
-import FooterXS from './layout/homepage-footer-sm';
-import { onToggleNavHomepageMobile } from '../../utils/hooks/globa.state';
 import { isUndefined } from 'lodash';
-import Chatbot from '../buyers/chatbot';
 import LoaderSpinner from '../../common/widget/loader';
+import withLayoutWrapper from './components/layout-wrapper';
 
 
 const HomePage:React.FC = () => {
-
-
-		const [toggle] = onToggleNavHomepageMobile();
 
 
 		const location = useLocation();
@@ -30,8 +22,7 @@ const HomePage:React.FC = () => {
 
 		const chatUrl = useAppSelector((state:RootState) => state.chatMsg);
 
-		const [load,setLoader] = useState<boolean>(false);
-
+	
 
 	
 	useEffect(() => {
@@ -92,24 +83,15 @@ const HomePage:React.FC = () => {
 
 
 
+	const [load, setLoader] = useState<boolean>(false);
 
 	
   return (
-		<>
-			<div className='relative'>
-				<div className='relative grid xs:grid-cols-1 sm:grid-cols-1 md:grid-cols-1 max-w-[90rem] mx-auto h-screen sm:h-[100%]' style={{ gridTemplateRows: '10vh repeat(2,1fr) 10vh' }}>
-					<Headers />
-					<HomepageMain />
-					<RenderIf value={!toggle}>
-						<FooterMd />
-						<FooterXS />
-					</RenderIf>
-				</div>
-				<Chatbot />
-			</div>
+		<div>
+			<HomepageMain />
 			<LoaderSpinner load={load} width='w-screen' />
-		</>
+		</div>
 	);
 };
 
-export default HomePage;
+export default withLayoutWrapper(HomePage);

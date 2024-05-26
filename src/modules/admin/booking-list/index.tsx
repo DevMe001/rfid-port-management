@@ -11,7 +11,7 @@ import useDebounceRef from '../../../utils/hooks/useDebounce';
 import SearchInput from '../component/Search';
 import { onVehicleModal } from '../../../utils/hooks/globa.state';
 import KebabMenu from '../component/KebabDropdown';
-import { useGetBookignScheduleQuery } from '../../../api-query/bookingapi-service';
+import { useDeleteBookingByIdMutation, useGetBookignScheduleQuery } from '../../../api-query/bookingapi-service';
 import PaginationRender from '../component/Pagination';
 
 
@@ -40,11 +40,11 @@ const BookingSchedule: React.FC = () => {
 	// 	},
 	// ];
 
-	const [deleteVehicle] = useDeleteVehicleMutation();
+	const [deleteBookingById] = useDeleteBookingByIdMutation();
 
 	const onDeleteBooking = async (id: string) => {
-		console.log(id);
-		await deleteVehicle(id);
+	
+		await deleteBookingById(id);
 	};
 
 	const body: (string | JSX.Element)[][] = paginatedData?.map((row) => [
@@ -54,7 +54,7 @@ const BookingSchedule: React.FC = () => {
 		 <a href={`/admin-dashboard/ewallet/${row.wallet_id}`}>{row.wallet_id}</a>, 
 			<span>&#8369; {row.amount}</span>,
 			<span>{row.status}</span>,
-			 <KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeleteBooking(row?.book_id as string) }]} />]);
+			 <KebabMenu list={[{ label: 'Delete', onClick: () => onDeleteBooking(row?.book_id as string) }]} />]);
 
 	const [filter, setFilter] = useState<string>('');
 	const [vehicleModal, setVehcile] = onVehicleModal();
@@ -71,15 +71,6 @@ const BookingSchedule: React.FC = () => {
 		console.log(filter);
 	};
 
-	// handle for add vehile icon
-	const onAddVehicleToggle = useCallback(() => {
-		window.scrollTo({
-			top: 0,
-			behavior: 'smooth',
-		});
-		document.body.style.overflow = 'hidden';
-		setVehcile(!vehicleModal);
-	}, []);
 
 	return (
 		<>

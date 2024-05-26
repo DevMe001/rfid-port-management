@@ -42,7 +42,7 @@ export type QueryResultTypeTransactionCount = {
 
 
 export type QueryResultTypeTransaction = {
-	data: Partial<PaymentTransactionType>;
+	data: Partial<PaymentTransactionType[]> | Partial<TransactionPaymentRecord[]>;
 	error: string | null;
 	isLoading: boolean;
 	isSuccess: boolean;
@@ -69,15 +69,21 @@ type PostParams = {
 	account_number:string;
 }
 
+type TransactionDate={
+	startDate:string;
+	endDate:string;
+}
+
 interface Sales {
 	createdAt: string;
 	booking_amount: number;
+	passenger_id:string;
 }
 
 export interface TransactionWithTotalsSales {
-	today: Sales[];
+	day: Sales[];
 	week: Sales[];
-	month: Sales[];
+	monthly: Sales[];
 	year: Sales[];
 }
 export type TransactionSalesReturn = {
@@ -86,6 +92,49 @@ export type TransactionSalesReturn = {
 	isLoading: boolean;
 	isSuccess: boolean;
 	isError: boolean;
+};
+
+
+export type TransactionPaymentRecord = {
+	transaction_id: string;
+	book_id: string;
+	createdAt: string;
+	booking: {
+		passengers: string;
+		amount: string;
+		service_charge: string;
+		status: string;
+		schedule: {
+			origin: string;
+			destination: string;
+			arrival_date: string;
+			arrival_time: string;
+			vehicle: {
+				vehicle_name: string;
+				vehicle_type: string;
+			};
+		};
+	};
+	wallet: {
+		account_number: string;
+		balance: number;
+	};
+	personal_information: {
+		firstname: string;
+		midlename: string;
+		lastname: string;
+		mobileNumber: string;
+		address: string;
+		postal_code: string;
+	};
+	payment_history: {
+		wallet_balance: number;
+		payment_type: string;
+		booking_amount: number;
+		current_balance: number;
+		createdAt: string;
+		passenger_id:number;
+	};
 };
 
 export const transactionService = createApi({
@@ -100,6 +149,13 @@ export const transactionService = createApi({
 			providesTags: ['TRANSACTION'],
 			keepUnusedDataFor: 0,
 		}),
+
+		getTransactionById: builder.query<TransactionPaymentRecord, QueryOptionsWithPolling | string>({
+			query: (id) => `/transaction/${id}`,
+			providesTags: ['TRANSACTION'],
+			keepUnusedDataFor: 0,
+		}),
+
 		getTransactionList: builder.query<QueryResultTypeTransaction, QueryOptionsWithPolling | undefined>({
 			query: () => '/transaction-list',
 			providesTags: ['TRANSACTION'],
@@ -131,9 +187,19 @@ export const transactionService = createApi({
 			}),
 			invalidatesTags: ['TRANSACTION'],
 		}),
+
+		filterTransactionListByDate: builder.mutation<QueryResultTypeTransaction, TransactionDate>({
+			query: ({ startDate, endDate }) => ({
+				url: `/transaction/findDate?startDate=${startDate}&endDate=${endDate}`,
+				method: 'GET',
+				providesTags: ['TRANSACTION'],
+				keepUnusedDataFor: 0,
+			}),
+			invalidatesTags: ['TRANSACTION'],
+		}),
 	}),
 });
 
-export const { useGetPaymentHistoryQuery,useDeleteTransactionMutation,useGetTransactionListQuery,usePostTransactionMutation,useGetTransactionCountAllQuery,useGetTotalSalesQuery } = transactionService;
+export const { useFilterTransactionListByDateMutation, useGetTransactionByIdQuery, useGetPaymentHistoryQuery, useDeleteTransactionMutation, useGetTransactionListQuery, usePostTransactionMutation, useGetTransactionCountAllQuery, useGetTotalSalesQuery } = transactionService;
 
 

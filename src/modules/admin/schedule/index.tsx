@@ -8,25 +8,28 @@ import usePagination from '../../../utils/hooks/usePagination';
 import { Schedules as ScheduleTypes } from '../../../api-query/types';
 import useDebounceRef from '../../../utils/hooks/useDebounce';
 import SearchInput from '../component/Search';
-import { onVehicleModal } from '../../../utils/hooks/globa.state';
+import { getScheduleRenderRow, onPopupModal, onVehicleModal } from '../../../utils/hooks/globa.state';
 import RenderIf from '../../../common/components/ui/render-if';
 import PopupModal from '../../../common/widget/modal/popup.,modal';
 import KebabMenu from '../component/KebabDropdown';
-import { useDeleteScheduleByIdMutation, useGetBookingScheduleAdminQuery, useGetFilterScheduleMutation, useNewScheduleMutation } from '../../../api-query/schedule-list.api';
+import { useDeleteScheduleByIdMutation, useGetBookingScheduleAdminQuery, useGetFilterScheduleMutation, useNewScheduleMutation, useUpdateScheduleMutation } from '../../../api-query/schedule-list.api';
 import PaginationRender from '../component/Pagination';
 import { useLocation } from 'react-router-dom';
 import {  isEmpty, startCase } from 'lodash';
 import * as Yup from 'yup';
-import { ErrorMessage, Field, FieldProps, Formik, Form } from 'formik';
-import { FaRegImage } from 'react-icons/fa6';
+import { ErrorMessage, Field, FieldProps, Formik, Form, FormikProps, FormikHelpers } from 'formik';
 import { Button, TextInput } from 'flowbite-react';
 import { FaSave } from 'react-icons/fa';
 import { VehicleIds, useGetVehicleIdListQuery } from '../../../api-query/vehicle-api';
+
+import moment from 'moment';
 
 interface FormData {
 	origin: string;
 	destination?: string;
 	seatRange?:string;
+	arrival_date:string | Date;
+	arrival_time:string;
 	vehicle_id?:string;
 }
 
@@ -34,49 +37,121 @@ const formSchema = Yup.object().shape({
 	origin: Yup.string().required('Field is required'),
 	destination: Yup.string().required('Field is required'),
 	seatRange: Yup.string(),
+	arrival_date: Yup.string(),
+	arrival_time: Yup.string(),
 	vehicle_id: Yup.string().required('Field is required'),
 });
 
-const initialValues: FormData = {
-	origin: '',
-	destination: '',
-	seatRange: '100',
-	vehicle_id: ''
+
+
+
+type ActionFormData = {
+	action: string;
+	row?: Partial<FormData & { schedule_id?: string }>;
 };
 
 
-const AddNewSchedule = ()=>{
-	const [scheduleModal, setSchedule] = onVehicleModal();
+const ScheduleRender: React.FC<ActionFormData> = ({row,action}) => {
+	const [scheduleModal, setSchedule] = onPopupModal();
 
-	
 	const { data: vehicleIds } = useGetVehicleIdListQuery(undefined, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
+	const vehiceList = !isEmpty(vehicleIds) ? (vehicleIds as unknown as VehicleIds[]) : [];
 
-	const vehiceList = !isEmpty(vehicleIds) ? vehicleIds as unknown as VehicleIds[] : [];
+	const [newSchedule] = useNewScheduleMutation();
+	const [updateSchedule] = useUpdateScheduleMutation();
 
-
-const [newVehicle] = useNewScheduleMutation();
+	
 
 	const onCloseModal = useCallback(() => {
 		setSchedule(false);
 		document.body.style.overflow = '';
 	}, []);
 
-	const handleSubmitRequest = async (values: FormData) => {
-		console.log(values);
+	const handleSubmitRequest = async (values: FormData, actions: FormikHelpers<FormData>) => {
+		const converted12 = moment(values.arrival_time, 'HH:mm').format('h:mm A');
 
-	const res =  await newVehicle({...values});
+	
 
-	console.log(res);
 
-		setSchedule(false);
-			
+
+		if(action === 'edit'){
+
+				const details = {
+					...values,
+					arrival_time: converted12,
+					schedule_id:row?.schedule_id
+				};
+
+
+			const res = await updateSchedule(details);
+
+			console.log(res);
+
+			setSchedule(false);
+
+			actions.resetForm();
+
+		}else{
+
+				const newData = {
+					...values,
+					arrival_time: converted12,
+				};
+
+					const res = await newSchedule(newData);
+
+					console.log(res);
+
+					setSchedule(false);
+
+					actions.resetForm();
+		}
+
+
+	};
+
+	
+
+	const onArrivalDate = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEvent<HTMLInputElement>, formikProps: FormikProps<FormData>) => {
+		let value = '';
+
+		if ('currentTarget' in e) {
+			value = (e.currentTarget as HTMLInputElement).value;
+		}
+
+		formikProps.setFieldValue(`arrival_date`, value);
+	};
+
+	const onArrivalTime = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEvent<HTMLInputElement>, formikProps: FormikProps<FormData>) => {
+		let value = '';
+
+		if ('currentTarget' in e) {
+			value = (e.currentTarget as HTMLInputElement).value;
+		}
+
+		formikProps.setFieldValue(`arrival_time`, value);
 	};
 
 
+const parsedTime = moment(row?.arrival_time, 'h:mm A');
+
+
+const formattedTime = parsedTime.format('HH:mm');
+
+
+
+	const initialValues: FormData = {
+		origin: row?.origin ?? '',
+		destination: row?.destination ?? '',
+		seatRange: row?.seatRange ?? '',
+		vehicle_id: row?.vehicle_id ?? '',
+		arrival_date: moment(row?.arrival_date ?? '').format('YYYY-MM-DD'),
+		arrival_time: formattedTime ?? '',
+	};
 
 	return (
-		<Formik initialValues={initialValues} validationSchema={formSchema} onSubmit={handleSubmitRequest}>
+		<Formik initialValues={initialValues} validationSchema={formSchema} onSubmit={handleSubmitRequest} enableReinitialize={true}>
 			<RenderIf value={scheduleModal}>
 				<PopupModal maxWidth='max-w-full' onClose={onCloseModal}>
 					<div className='w-[20rem]'>
@@ -105,6 +180,38 @@ const [newVehicle] = useNewScheduleMutation();
 
 								<ErrorMessage
 									name='destination'
+									render={(msg) => (
+										<div style={{ color: '#f10000' }} className='error'>
+											{msg}
+										</div>
+									)}
+								/>
+							</div>
+
+							<div>
+								<label htmlFor='arrival_date' className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'>
+									Arrival date
+								</label>
+								<Field name='arrival_date'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} color='info' style={{ maxWidth: '100%' }} id='arrival_date' type='date' onChange={(e) => onArrivalDate(e, fieldProps.form)} placeholder='' />}</Field>
+
+								<ErrorMessage
+									name='arrival_date'
+									render={(msg) => (
+										<div style={{ color: '#f10000' }} className='error'>
+											{msg}
+										</div>
+									)}
+								/>
+							</div>
+
+							<div>
+								<label htmlFor='arrival_time' className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'>
+									Arrival time
+								</label>
+								<Field name='arrival_time'>{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} color='info' style={{ maxWidth: '100%' }} id='arrival_time' type='time' onChange={(e) => onArrivalTime(e, fieldProps.form)} placeholder='' />}</Field>
+
+								<ErrorMessage
+									name='arrival_time'
 									render={(msg) => (
 										<div style={{ color: '#f10000' }} className='error'>
 											{msg}
@@ -145,11 +252,11 @@ const [newVehicle] = useNewScheduleMutation();
 			</RenderIf>
 		</Formik>
 	);
-}
+};
 
 
 
-const AddNewScheduleRender = React.memo(AddNewSchedule);
+
 
 
 
@@ -164,7 +271,7 @@ let params = scheduleParams?.pathname.split('/')[3] ?? '';
 
 
 
-	const header = ['ID', 'Vehicle photo', 'Origin', 'Destination','Arrival date', 'Action'];
+	const header = ['ID', 'Vehicle photo', 'Origin', 'Destination','Arrival date','arrival time', 'Action'];
 
 	const { data: scheduleRecord } = useGetBookingScheduleAdminQuery(undefined, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
@@ -173,7 +280,7 @@ let params = scheduleParams?.pathname.split('/')[3] ?? '';
 
 	const [getFilterSchedule] = useGetFilterScheduleMutation();
 
-
+	const [actionState, setAction] = useState<string>('add');
 
 
 	const { paginatedData, handlePagination, currentPage, totalPages, setData } = usePagination<ScheduleTypes>(scheduleRecord as unknown as ScheduleTypes[], 10);
@@ -212,21 +319,34 @@ let params = scheduleParams?.pathname.split('/')[3] ?? '';
 	};
 
 
+
+
+const [dataRow, setRow] = getScheduleRenderRow();
+
+	
 	
 
 	const body: (string | JSX.Element)[][] = paginatedData?.map((row) => [
-		String(row.schedule_id),
+		<div className='w-[11rem]'>
+			<p className='overflow-hidden truncate w-4/12'>{String(row.schedule_id)}</p>
+		</div>,
 		<a href='#'>
 			<img src={`http://localhost:8000/vehicle?photo=${row.vehicle.vehicle_id}`} className='w-[50px] h-[50px]' />
 		</a>,
 		String(row.origin),
 		String(row.destination),
-		String(row.arrival_date),
-		<KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeleteSchedule(row.schedule_id) }]} />,
+		String(moment(row.arrival_date).format('MMMM DD, YYYY')),
+		String(row.arrival_time),
+		<KebabMenu
+			list={[
+				{ label: 'Edit', onClick: () => onAddScheduleToggle('edit', row) },
+				{ label: 'Delete', onClick: () => onDeleteSchedule(row.schedule_id) },
+			]}
+		/>,
 	]);
 
 	const [filter, setFilter] = useState<string>('');
-	const [vehicleModal, setVehcile] = onVehicleModal();
+	const [, setSched] = onPopupModal();
 
 	const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
@@ -234,21 +354,37 @@ let params = scheduleParams?.pathname.split('/')[3] ?? '';
 	}, 200);
 
 	const onSubmitHandler = async () => {
-		// const filterQuery: any = await filterRfidQuery(filter);
-		// setData(filterQuery.data.data);
+		const filterQuery: any = await getFilterSchedule(filter);
+		setData(filterQuery.data.data as unknown as ScheduleTypes[]);
 
-		console.log(filter);
+	
 	};
 
 	// handle for add vehile icon
-	const onAddVehicleToggle = useCallback(() => {
-		window.scrollTo({
-			top: 0,
-			behavior: 'smooth',
-		});
-		document.body.style.overflow = 'hidden';
-		setVehcile(!vehicleModal);
-	}, []);
+
+	
+const onAddScheduleToggle = useCallback((action: string, row?: Partial<ScheduleTypes>) => {
+	window.scrollTo({
+		top: 0,
+		behavior: 'smooth',
+	});
+	document.body.style.overflow = 'hidden';
+	setSched(true);
+
+	setAction(action);
+	if (row) {
+		// Reset the row state to an empty object before inserting new data
+		setRow({}); // Reset to empty object
+
+		// If a new row is provided, update the row state with the new value
+		if (row) {
+			setRow((prevRow) => ({
+				...prevRow,
+				...row,
+			}));
+		}
+	}
+}, []);
 
 	return (
 		<>
@@ -260,12 +396,18 @@ let params = scheduleParams?.pathname.split('/')[3] ?? '';
 					<TableRender header={header} body={body} />
 					<PaginationRender prev={() => handlePagination('prev')} next={() => handlePagination('next')} currentPage={currentPage} totalPage={totalPages} />
 
-					<div className='flex justify-end pr-5 mt-10'>
-						<CustomButton onClick={onAddVehicleToggle} label={<p className='text-3xl'>+</p>} className='rounded-full w-[4rem] h-[4rem] bg-accent text-white !outline-none !border-none hover:bg-white hover:text-navy' />
+					<div className='flex justify-start lg:justify-end pr-5 -mt-5 lg:mt-10'>
+						<CustomButton onClick={() => onAddScheduleToggle('add')} label={<p className='text-3xl'>+</p>} className='rounded-full w-[4rem] h-[4rem] bg-accent text-white !outline-none !border-none hover:bg-white hover:text-navy' />
 					</div>
 				</div>
 			</div>
-			<AddNewScheduleRender />
+
+			<RenderIf value={actionState === 'edit'}>
+				<ScheduleRender row={dataRow} action='edit' />
+			</RenderIf>
+			<RenderIf value={actionState === 'add'}>
+				<ScheduleRender action='add' />
+			</RenderIf>
 		</>
 	);
 };

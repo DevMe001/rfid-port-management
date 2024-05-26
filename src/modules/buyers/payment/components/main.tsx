@@ -31,11 +31,11 @@ const PaymentDetails: React.FC<PaymentProps> = ({ status, rfIDCode, account }) =
 					<RenderIf value={!isEmpty(rfIDCode)}>
 						<p className='text-accent font-medium text-xl'>
 							<span className='font-bold mr-2'>Account number:</span>
-							{rfIDCode}
+							{account}
 						</p>
 						<p className='text-accent font-medium text-xl'>
 							<span className='font-bold mr-2'>Wallet pin code:</span>
-							{account}
+							{rfIDCode}
 						</p>
 					</RenderIf>
 				</div>

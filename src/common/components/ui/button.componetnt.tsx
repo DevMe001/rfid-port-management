@@ -3,10 +3,11 @@ import clsx from 'clsx';
 import React, { ComponentProps } from 'react'
 
 
-type ButtonProps={
-  label:string | React.ReactNode;
-  css?:Interpolation<Theme>
-}& ComponentProps<'button'>
+type ButtonProps = {
+	label: string | React.ReactNode;
+	css?: Interpolation<Theme>;
+	className?:string;
+} & ComponentProps<'button'>;
 
 const CustomButton: React.FC<ButtonProps> = ({ label,className,...props}) => {
 	return (

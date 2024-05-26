@@ -15,7 +15,7 @@ import KebabMenu from '../component/KebabDropdown';
 import { useDeleteWalletAccountMutation, useGetEwalletAccountQuery, useGetFilterEwalletMutation } from '../../../api-query/wallet-api';
 import PaginationRender from '../component/Pagination';
 import { isEmpty } from 'lodash';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const AddNewWallet = ()=>{
 
@@ -54,7 +54,19 @@ let params = walletParams?.pathname.split('/')[3] ?? '';
 
 
 	
-	const header = ['Wallet id', 'User id', 'Account number', 'balance', 'Action'];
+	const header = ['Wallet id', 'Account number','Pin code', 'balance', 'Action'];
+
+
+
+
+
+
+
+
+
+
+
+	
 
 	const { data: walletRecord } = useGetEwalletAccountQuery(undefined, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 
@@ -89,7 +101,7 @@ let params = walletParams?.pathname.split('/')[3] ?? '';
 
 
 
-
+const navigate = useNavigate();
 
 
 
@@ -101,16 +113,20 @@ const res =	await deleteWalletAccount(id);
 		console.log(res)
 	};
 
+	const onViewWalletAccount = (id:string) =>{
+		navigate(`/admin-dashboard/ewallet/${id}`);
+	}
+
+
 	const body: (string | JSX.Element)[][] = paginatedData?.map((row) => [
 		String(row.wallet_id),
-		<a href={`/admin-dashboard/personal/${row.personal_id}`}>{row.personal_id}</a>, 
 		String(row.account_number),
+		String(row.code.slice(0, 36)),
 		<span>&#8369; {String(row.balance)}</span>,
 		<KebabMenu
 			list={[
-				{  label: 'View'}  ,
-				{  label: 'Edit'}  ,
-				{  label: 'Delete',onClick:()=> onDeleteWallet(row.wallet_id)}
+				{ label: 'View', onClick: () => onViewWalletAccount(row.wallet_id) },
+				{ label: 'Delete', onClick: () => onDeleteWallet(row.wallet_id) },
 			]}
 		/>,
 	]);
@@ -131,14 +147,14 @@ const res =	await deleteWalletAccount(id);
 	};
 
 	// handle for add vehile icon
-	const onAddVehicleToggle = useCallback(() => {
-		window.scrollTo({
-			top: 0,
-			behavior: 'smooth',
-		});
-		document.body.style.overflow = 'hidden';
-		setVehcile(!vehicleModal);
-	}, []);
+	// const onAddVehicleToggle = useCallback(() => {
+	// 	window.scrollTo({
+	// 		top: 0,
+	// 		behavior: 'smooth',
+	// 	});
+	// 	document.body.style.overflow = 'hidden';
+	// 	setVehcile(!vehicleModal);
+	// }, []);
 
 	return (
 		<>
@@ -150,9 +166,9 @@ const res =	await deleteWalletAccount(id);
 					<TableRender header={header} body={body} />
 					<PaginationRender prev={() => handlePagination('prev')} next={() => handlePagination('next')} currentPage={currentPage} totalPage={totalPages} />
 
-					<div className='flex justify-end pr-5 mt-10'>
+					{/* <div className='flex justify-end pr-5 mt-10'>
 						<CustomButton onClick={onAddVehicleToggle} label={<p className='text-3xl'>+</p>} className='rounded-full w-[4rem] h-[4rem] bg-accent text-white !outline-none !border-none hover:bg-white hover:text-navy' />
-					</div>
+					</div> */}
 				</div>
 			</div>
 			<AddNewWalletRender />

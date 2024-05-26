@@ -6,7 +6,7 @@ import { Formik, Form, FormikProps } from 'formik';
 import { RootState, useAppDispatch, useAppSelector } from '../../../utils/redux/store';
 
 import * as Yup from 'yup';
-import { isEmpty } from 'lodash';
+import { isEmpty, isNull } from 'lodash';
 
 import '../styles/book-list.css'
 import '../styles/loader.css'
@@ -42,6 +42,8 @@ import { useGetVerifyBalanceAccountMutation } from '../../../api-query/wallet-ap
 
 import RFIDScannerDevice from '../../../common/components/ui/rfid-scanner';
 import { useGetSeatTakenQuery } from '../../../api-query/bookingapi-service';
+import WalletCredential from '../../../common/components/ui/use-wallet';
+import moment from 'moment';
 
 interface Passenger {
 	firstname: string;
@@ -55,6 +57,7 @@ interface Passenger {
 	vehicleChosen?: VehiclePassenger;
 	rangePrice?: number;
 	personal_id?: string;
+	booking_amount:string;
 }
 
 interface VehiclePassenger {
@@ -92,6 +95,7 @@ function validatorSchemaHandler(passengerType: string) {
 		fare_type: Yup.string(),
 		personal_id: Yup.string(),
 		vehicleChosen: Yup.object(),
+		
 	});
 
 
@@ -772,7 +776,8 @@ const [scanner, setScanner] = useState<boolean>(false);
 
 const [scan, setScan] = useState<string>('');
 const [scannedValue, setScanValue] = useState<string>('');
-const [codeInput,setCode] = useState<string>('');
+const [codeInput, setCode] = useState<string>('');
+const [accountNumber,seAccoutNumber] = useState<string>('');
 
 const inputRFIDRef = useRef<HTMLInputElement>(null);
 // use rfid features
@@ -821,6 +826,14 @@ const handlerScanningDevice = useCallback(
 	[setScanner, setScan],
 );
 
+const handleAccountNUmber = useCallback(
+	async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		seAccoutNumber(value);
+	},
+	[],
+);
+
 
 const handleRFIDCode = useCallback(
 	async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -841,18 +854,24 @@ const handleRFIDCode = useCallback(
 const OnRFIDWalletCheck = useCallback(
 	async () => {
 
-		console.log(scannedValue);
+	
 		console.log(userProfileDetails?.personal_id);
 
 		const data = {
-			terms:scan,
-			code:codeInput,
-			personal_id:userProfileDetails?.personal_id as string
-		}
+			terms: accountNumber,
+			code: codeInput,
+			personal_id: userProfileDetails?.personal_id as string,
+		};
+
+		console.log(data,'get list ')
+
 		const res:any = await getVerifyBalanceAccount(data);
 
 	let totalAmount = Number(Number(calculatePassengers()[1]) + Number(calculatePassengersVehicle()[1])).toFixed(2);
 
+		if (isNull(res.data)) {
+			enqueueSnackbar('No wallet created', { variant: 'warning', autoHideDuration: 4000 });
+		}
 		if (res.data.message === 'illegal') {
 			enqueueSnackbar('Account number not linked to user', { variant: 'warning', autoHideDuration: 4000 });
 		} else if (res.data.message === 'valid') {
@@ -945,6 +964,25 @@ useEffect(() => {
 }, [isActive]);
 
 
+
+const terminalFee = 10;
+const serviceFee = 10;
+const bookSeniorPrice = passenger.senior > 0 ? (757 * passenger.senior) + (terminalFee + serviceFee) : 0;
+
+const discountedSenior = bookSeniorPrice * 0.2;
+
+const bookAmountSenior = bookSeniorPrice - discountedSenior;
+
+
+const bookPWD = passenger.pwd > 0 ? 757 * passenger.pwd + (terminalFee + serviceFee) : 0;
+
+const discountedPWD = bookPWD * 0.2;
+
+const bookPWDAmount = bookPWD - discountedPWD;
+
+
+
+
 	return (
 		<RenderIf value={!toggle}>
 			<RenderIf value={tabValue == 0}>
@@ -975,6 +1013,7 @@ useEffect(() => {
 									plate_number: '',
 									vehicletype_id: '0',
 								},
+								booking_amount: bookAmountSenior,
 							})),
 							pwdPassenger: Array.from({ length: passenger.pwd }, () => ({
 								firstname: '',
@@ -992,6 +1031,7 @@ useEffect(() => {
 									plate_number: '',
 									vehicletype_id: '0',
 								},
+								booking_amount: bookPWDAmount,
 							})),
 							studentPassengers: Array.from({ length: passenger.student }, () => ({
 								firstname: '',
@@ -1009,6 +1049,7 @@ useEffect(() => {
 									plate_number: '',
 									vehicletype_id: '0',
 								},
+								booking_amount: passenger.student > 0 ? 848 * passenger.student + (terminalFee + serviceFee) : 0,
 							})),
 							childPassengers: Array.from({ length: passenger.child }, () => ({
 								firstname: '',
@@ -1026,6 +1067,7 @@ useEffect(() => {
 									plate_number: '',
 									vehicletype_id: '0',
 								},
+								booking_amount: passenger.child > 0 ? 530 * passenger.child + (terminalFee + serviceFee) : 0,
 							})),
 							regularPassengers: Array.from({ length: passenger.regular }, () => ({
 								firstname: '',
@@ -1043,6 +1085,7 @@ useEffect(() => {
 									plate_number: '',
 									vehicletype_id: '0',
 								},
+								booking_amount: passenger.regular > 0 ? 1060 * passenger.regular + (terminalFee + serviceFee) : 0,
 							})),
 
 							infantPassengers: Array.from({ length: passenger.infant }, () => ({
@@ -1061,6 +1104,7 @@ useEffect(() => {
 									plate_number: '',
 									vehicletype_id: '0',
 								},
+								booking_amount: passenger.infant > 0 ? 60 * passenger.infant + (terminalFee + serviceFee) : 0,
 							})),
 						}}
 						validationSchema={formSchema}
@@ -1190,7 +1234,9 @@ useEffect(() => {
 							<div className='flex flex-col gap-2 w-full px-4'>
 								<div className='flex justify-between items-start mb-8'>
 									<p className='ml-5 font-medium text-navy'>Arrival date:</p>
-									<p className='ml-5'>{dateArrival(getParamsSchedule?.arrival_date as string)}</p>
+									<p className='ml-5'>
+										{moment(getParamsSchedule?.arrival_date as string).format('MMM DD, YYYY')} at {getParamsSchedule.arrival_time as string}
+									</p>
 								</div>
 								<div className='route flex justify-between items-center pl-5 leading-6 w-9/12 route h-full mx-auto'>
 									<i id='routeA'>
@@ -1373,7 +1419,8 @@ useEffect(() => {
 							<PopupModal onClose={onCloseRfid}>
 								<div className='p-2'>
 									{/* <p className='text-navy text-center text-xl my-2 break-words'>{scan}</p> */}
-									<RFIDScannerDevice scan={scan} handleEnableFocus={() => {}} scanning={scanner} inputRef={inputRFIDRef} handleScannerDevice={handlerScanningDevice} onCodeInput={handleRFIDCode} onSubmit={OnRFIDWalletCheck}/>;
+									{/* <RFIDScannerDevice scan={scan} handleEnableFocus={() => {}} scanning={scanner} inputRef={inputRFIDRef} handleScannerDevice={handlerScanningDevice} onCodeInput={handleRFIDCode} onSubmit={OnRFIDWalletCheck} />; */}
+									<WalletCredential onAccountNumber={handleAccountNUmber} onCodeInput={handleRFIDCode} onSubmit={OnRFIDWalletCheck} />
 								</div>
 							</PopupModal>
 						</RenderIf>

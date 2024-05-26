@@ -13,7 +13,7 @@ type SearchProps ={
 const SearchInput: React.FC<SearchProps> = ({ onSearch, onSubmit }) => {
 	return (
 		<div className='flex justify-end items-center pr-5 pb-2 gap-2 my-5'>
-			<TextInput type='search' placeholder='Search' className='rounded !outline-none !border-none' onChange={onSearch} />
+			<TextInput type='search' placeholder='Search' className='rounded !outline-none !border-none' onChange={onSearch} required />
 			<CustomButton
 				onClick={onSubmit}
 				label={

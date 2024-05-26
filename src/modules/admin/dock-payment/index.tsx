@@ -22,6 +22,7 @@ import SearchInput from '../component/Search';
 import Breadcrumbs from '../component/Breadcrumbs';
 import KebabMenu from '../component/KebabDropdown';
 import { PaymentHistory, useDeleteTransactionMutation, useGetPaymentHistoryQuery, usePostTransactionMutation } from '../../../api-query/transaction.api.services';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -159,7 +160,7 @@ const [deleteTransaction] = useDeleteTransactionMutation();
 
 const { paginatedData, handlePagination, currentPage, totalPages, setData } = usePagination<PaymentHistory>(getPaymentHistory as unknown as PaymentHistory[], 10);
 
-
+const navigate = useNavigate();
 
 	const [filterRfidQuery] = useFilterRfidQueryMutation();
 
@@ -192,7 +193,7 @@ const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) =>
 		String(row.wallet_balance), 
 		String(row.booking_amount), 
 		String(row.current_balance), 
-		 <KebabMenu list={[{ label: 'View' }, { label: 'Edit' }, { label: 'Delete', onClick: () => onDeletePaymentHistory(row?.payment_id as string) }]} />]);
+		 <KebabMenu list={[ { label: 'Delete', onClick: () => onDeletePaymentHistory(row?.payment_id as string) }]} />]);
 
 
 
@@ -212,11 +213,11 @@ const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) =>
 					<PaginationRender prev={() => handlePagination('prev')} next={() => handlePagination('next')} currentPage={currentPage} totalPage={totalPages} />
 
 					<div className='flex justify-end pr-5 mt-10'>
-						<CustomButton onClick={onRFIdHandler} label={<p className='text-3xl'>+</p>} className='rounded-full w-[4rem] h-[4rem] bg-accent text-white !outline-none !border-none hover:bg-white hover:text-navy' />
+						<CustomButton onClick={() => navigate('/pay')} label={<p className='text-3xl'>+</p>} className='rounded-full w-[4rem] h-[4rem] bg-accent text-white !outline-none !border-none hover:bg-white hover:text-navy' />
 					</div>
 				</div>
 			</div>
-			<OptimizeAddRfid />
+			{/* <OptimizeAddRfid /> */}
 		</>
 	);
 }

@@ -36,9 +36,11 @@ const store = configureStore({
 	reducer: persistorReducer,
 	middleware: (response) =>
 		response({
-			serializableCheck: {
-				ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, REGISTER, PURGE],
-			},
+			immutableCheck: false,
+			serializableCheck: false,
+			// serializableCheck: {
+			// 	ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, REGISTER, PURGE],
+			// },
 		}).concat(
 			// define midleware
 			authService.middleware,
@@ -54,7 +56,7 @@ const store = configureStore({
 			passengerApiService.middleware,
 			bookingApiService.middleware,
 			transactionService.middleware,
-			logger,
+			
 		),
 	devTools: process.env.NODE_ENV != 'production',
 });

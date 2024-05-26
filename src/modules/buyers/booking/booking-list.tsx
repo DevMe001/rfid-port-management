@@ -22,6 +22,8 @@ import dateArrival from '../../../utils/dateFormat';
 import { useGetPersonalDetailsByIdQuery } from '../../../api-query/personal-details.api';
 import LoaderSpinner from '../../../common/widget/loader';
 import { storeChat } from '../../../utils/redux/slicer/chatSlice';
+import { useGetTotalRFIDSlotQuery } from '../../../api-query/rfid-api';
+import moment from 'moment';
 
 
 interface PassengerType{
@@ -57,6 +59,10 @@ const BookingRecentList: React.FC = () => {
 	
 	const { data, isError } = useGetBookingScheduleQuery({}, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
 	const { data: getPersonalByInformation, isError:isPersonalInformationError } = useGetPersonalDetailsByIdQuery(authUser.id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
+	const {data:totalRFIDAvailable} = useGetTotalRFIDSlotQuery(undefined,{pollingInterval:3000,refetchOnMountOrArgChange:true,skip:false});
+
+
+
 
 	const navigate = useNavigate();
 	const { onOpen } = useToggleAuth();
@@ -165,42 +171,50 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 
 	const dispatch = useAppDispatch();
 
+
+
 	const onRouteBookingById = async(id: string) => {
 
+
+
 		try {
-			
-			if (!isNull(getPersonalByInformation)){
+
+			let totalRFID = totalRFIDAvailable as unknown as number;
+
+				if (totalPassenger <= totalRFID) {
+					if (!isNull(getPersonalByInformation)) {
+						setLoader(true);
+
+						await waitSec(3000);
+						setLoader(false);
+
+						if (totalPassenger > 0) navigate(`/booking/${id}`);
+
+						if (isEmpty(fare_type)) {
+							setFareClass({ isActiveError: true });
+							await waitSec(1000);
+							setFareClass({ isActiveError: false });
+						}
+
+						dispatch(storePassengerNumber({ totalCount: totalPassenger, senior: senior, student: student, regular: regular, child: child, infant: infant, pwd: pwd, passengerClass: fare_type }));
+					} else {
+						enqueueSnackbar('Complete information first', { variant: 'warning', autoHideDuration: 6000 });
 
 						setLoader(true);
 
 						await waitSec(3000);
 						setLoader(false);
-				
-					if (totalPassenger > 0) navigate(`/booking/${id}`);
+						setSelectedIndex(2);
 
-					if (isEmpty(fare_type)) {
-						setFareClass({ isActiveError: true });
-						await waitSec(1000);
-						setFareClass({ isActiveError: false });
+						navigate('/user-dashboard');
 					}
+				} else {
+					let displayMsg = totalRFID > 0 && !isUndefined(totalRFID) ? `Passenger range to limit of quota , Only ${totalRFID} RFID slot available at this moment` : 'No RFID SLOT AVAILABLE';
 
-				dispatch(storePassengerNumber({ totalCount: totalPassenger, senior: senior, student: student, regular: regular, child: child, infant: infant,pwd:pwd, passengerClass: fare_type }));
-			} else{
+					enqueueSnackbar(displayMsg, { variant: 'warning', autoHideDuration: 3000 });
+				}
 
-				enqueueSnackbar('Complete information first', { variant: 'warning', autoHideDuration: 3000 });
-
-				setLoader(true);
-					
-			
-				await waitSec(3000);
-				setLoader(false);
-				setSelectedIndex(2);
-				
-		
-				navigate('/user-dashboard');
-
-				
-			}
+	
 
 			
 		} catch (err) {
@@ -230,7 +244,10 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 								<div className='flex flex-col gap-2 indicator w-full px-4'>
 									<div className='flex justify-between items-start mb-2'>
 										<p className='ml-5'>Arrival date:</p>
-										<p className='ml-5'> {dateArrival(schedule.arrival_date)}</p>
+										<p className='ml-5'>
+											{' '}
+											{moment(schedule.arrival_date).format('MMM DD, YYYY')} at {schedule.arrival_time}
+										</p>
 									</div>
 									<div className='route flex justify-between items-center pl-5 leading-6 w-9/12 route h-full mx-auto'>
 										<i id='routeA'>
@@ -257,7 +274,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 							</div>
 						))}
 					<RenderIf value={bookingModal == true}>
-						<PopupModal>
+						<PopupModal maxWidth='w-full'>
 							<div className='flex flex-col flex-1 w-full my-5'>
 								<label htmlFor='passengerClass' className='mb-1 font-medium'>
 									Select fare class
@@ -321,7 +338,7 @@ const handlerPassengerClass = (e: ChangeEvent<HTMLSelectElement>) => {
 				</div>
 			</RenderIf>
 
-			<LoaderSpinner load={loader}/>
+			<LoaderSpinner load={loader} width='w-screen' />
 		</>
 	);
 };

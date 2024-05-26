@@ -8,11 +8,11 @@ import { RouterProvider } from 'react-router-dom'
 import Router from './router/index.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+
     <Provider store={store}>
       <PersistGate persistor={persistorStore}>
       <RouterProvider router={Router} />
       </PersistGate>
     </Provider>
-  </React.StrictMode>,
+
 )

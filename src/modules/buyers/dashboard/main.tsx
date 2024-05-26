@@ -5,7 +5,7 @@ import '../styles/dashboard-main.css'
 import clsx from 'clsx';
 import useNavigationHandler from '../../../utils/hooks/useNavigationHandler';
 import { RootState, useAppSelector } from '../../../utils/redux/store';
-import { Button, Label, TextInput } from 'flowbite-react';
+import { Button, Label, Table, TextInput } from 'flowbite-react';
 import { FaSave, FaRegUserCircle } from 'react-icons/fa';
 import { BiRfid } from 'react-icons/bi';
 import { Formik, Form, ErrorMessage, FieldProps,Field } from 'formik';
@@ -18,8 +18,15 @@ import { IUser } from '../../../utils/redux/slicer/authSlice';
 import Immutable from '../../../immutable/constant';
 
 
-import displayFullName from '../../../utils';
+import displayFullName, { dateFormatted } from '../../../utils';
 import dayjs from 'dayjs';
+import { useGetFilterEwalletByWalletIdentityMutation } from '../../../api-query/wallet-api';
+import { Booking, BookingSchedules, Ewallet } from '../../../api-query/types';
+import useSafeRender from '../../../utils/hooks/effect-render';
+import { BookingInfo, useGetBookingScheduledByUserMutation } from '../../../api-query/bookingapi-service';
+import usePagination from '../../../utils/hooks/usePagination';
+import TableRender from '../../admin/component/Table';
+import PaginationRender from '../../admin/component/Pagination';
 
 const listOrders = [
 	{
@@ -80,9 +87,15 @@ const DashboardUser = () => {
 	const [selectIndex, setSelectIndex] = useSelectIndex();
 	const [addPersonalDetails] = useAddPersonalDetailsMutation();
 	const [updateProfileAvatar] = useUpdateProfileAvatarMutation();
-		
-	
+	const [getFilterEwalletByWalletIdentity] = useGetFilterEwalletByWalletIdentityMutation();
+	const [getBookingScheduledByUser] = useGetBookingScheduledByUserMutation();	
+
+
+
 	const user = useAppSelector((state: RootState) => state.authUser);
+
+
+	console.log(user,'get user');
 
 
 	const { data: userProfile } = useGetProfileAccountQuery(user.id as string, { pollingInterval: 3000, refetchOnMountOrArgChange: true, skip: false });
@@ -90,10 +103,100 @@ const DashboardUser = () => {
 	const [preview,setPreview] = useState<string>('');
 
 
+
+
 	const getProfileUser = !isEmpty(userProfile) ? userProfile : null;
 	const getProfileDetails = !isEmpty(userProfileDetails) ? userProfileDetails : null;
 
-	console.log(userProfileDetails);
+
+	const [getWallet, setWallet] = useState<Partial<Ewallet>>({});
+
+	const [bookSched, setbookingScheduled] = useState<BookingInfo[]>([]);
+
+
+	const { paginatedData, handlePagination, currentPage, totalPages } = usePagination<BookingInfo>(bookSched, 5);
+
+
+	const headerSchedule = ['book id', 'origin', 'destination', 'departure','arrival'];
+
+	const bodySchedule: (string | JSX.Element)[][] = paginatedData?.map((row) => [
+		String(row.book_id),
+		String(row.schedule.origin),
+		String(row.schedule.destination),
+		dateFormatted(String(row.schedule.createdAt)).includes('0') ? 'today' : dateFormatted(String(row.schedule.createdAt)).includes('-') ? 'Book expired' : dateFormatted(String(row.schedule.createdAt)),
+		dateFormatted(String(row.schedule.arrival_date)).includes('0') ? 'today' : dateFormatted(String(row.schedule.arrival_date)).includes('-') ? 'Book expired' : dateFormatted(String(row.schedule.arrival_date)),
+
+	]);
+
+
+const getWalletFunc = useCallback(async() => {
+	if (!isEmpty(userProfileDetails?.personal_id)) {
+		console.log(userProfileDetails?.personal_id);
+
+		const resp = await getFilterEwalletByWalletIdentity(userProfileDetails?.personal_id as string);
+
+
+		console.log(resp,'get rwallet');
+
+		if ('data' in resp) {
+			let details = {
+				account_number: resp?.data?.account_number as  string,
+				balance: resp.data?.balance as string,
+			};
+			setWallet(details);
+		}
+	}
+}, [userProfileDetails, getFilterEwalletByWalletIdentity]);
+
+
+const getBooSchedFunc = useCallback(async () => {
+	if (!isEmpty(userProfileDetails?.personal_id)) {
+		console.log(userProfileDetails?.personal_id);
+
+		const resp = await getBookingScheduledByUser(userProfileDetails?.personal_id as string);
+	
+		let clone:BookingInfo[] = [];
+		
+		if ('data' in resp) {
+
+			if(!isEmpty(resp.data)){
+
+					resp.data.map((item) => {
+						const details = {
+							book_id: item?.book_id as string,
+							schedule: {
+								origin: item?.schedule?.origin as string,
+								destination: item?.schedule?.destination as string,
+								arrival_date: item?.schedule?.arrival_date as string,
+								createdAt: item?.schedule?.createdAt as string,
+							},
+						};
+
+						clone.push(details);
+
+					});
+
+			}
+		
+			setbookingScheduled(clone);
+			
+
+			
+			
+		}
+	}
+}, [userProfileDetails, getBookingScheduledByUser]);
+
+useSafeRender(() => {
+	getBooSchedFunc();
+}, [getBooSchedFunc]);
+
+
+
+
+useSafeRender(() => {
+	getWalletFunc();
+}, [getWalletFunc]);
 
 
 useEffect(() => {
@@ -238,7 +341,7 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 	return (
 		<RenderIf value={!toggle}>
 			<main className='col-start-1 -col-end-1 row-start-2 row-end-2 h-[100%] sm:h-[60vh]  md:h-[50vh] lg:h-[40vh] mt-[5rem]'>
-				<div className='grid grid-cols-2 w-[80%] mx-auto h-full' style={{ gridTemplateColumns: '0.3fr 1fr', gridTemplateRows: '70vh 60vh' }}>
+				<div className='grid grid-cols-2 w-[85%] mx-auto h-full' style={{ gridTemplateColumns: '0.3fr 1fr', gridTemplateRows: '70vh 60vh' }}>
 					<aside className='flex justify-center bg-secondary rounded-md'>
 						<ul className={clsx('flex', 'flex-col', 'text-lite', 'w-full', 'h-full', 'text-center', 'pb-5', 'justify-start', 'border-top', 'gap-2')}>
 							{listOrders.map((item, i) => {
@@ -262,37 +365,59 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 					</aside>
 					<main className='bg-white relative z-8'>
 						<RenderIf value={selectIndex == 0}>
-							<div className='flex flex-col p-5 leading-9'>
-								<h4 className='py-5 text-navy font-medium'>Dashboard</h4>
-								<hr className='border-dotted border-1 border-teal-600' />
+							<RenderIf value={!isEmpty(getWallet)}>
+								<div className='flex flex-col p-5 leading-9'>
+									<h4 className='py-5 text-navy font-medium'>Dashboard</h4>
+									<hr className='border-dotted border-1 border-teal-600' />
 
-								<div style={{ border: '1px solid #eaeaea' }} className='p-5 my-5'>
-									<h5>
-										Hello, <span className='font-medium'>{user.displayName}</span>
-									</h5>
-									<p className='m-0 leading-6'>Introducing our RFID e-wallet solution, your hassle-free way to make transactions on the go. Simply tap your RFID-enabled device to pay securely and swiftly. Track your spending, reload funds, and enjoy the convenience of contactless payments with ease.</p>
-								</div>
-								<div className='grid grid-cols-2 w-[90%] mx-auto'>
-									<div>
-										<label className='font-medium text-navy' htmlFor=''>
-											E-wallet
-										</label>
-										<div id='empty-cover-art' className='shadow-md py-5 h-28 rounded w-56 bg-accent text-center opacity-80 md:border-solid md:border-2 md:border-teal-300'>
-											<center>
-												<BiRfid size={50} color='#ffffff' />
-											</center>
-											<div className=''>
-												<span className='font-mono text-white rounded'>0x3e622535435345345</span>
+									<div style={{ border: '1px solid #eaeaea' }} className='p-5 my-5'>
+										<h5>
+											Hello, <span className='font-medium'>{user.displayName}</span>
+										</h5>
+										<p className='m-0 leading-6'>Introducing our RFID e-wallet solution, your hassle-free way to make transactions on the go. Simply tap your RFID-enabled device to pay securely and swiftly. Track your spending, reload funds, and enjoy the convenience of contactless payments with ease.</p>
+									</div>
+									<div className='grid grid-cols-2 w-[90%] mx-auto'>
+										<div>
+											<label className='font-medium text-navy' htmlFor=''>
+												E-wallet
+											</label>
+											<div id='empty-cover-art' className='shadow-md py-5 h-35 rounded w-80 bg-accent text-center opacity-80 md:border-solid md:border-2 md:border-teal-300'>
+												<center>
+													<BiRfid size={50} color='#ffffff' />
+												</center>
+												<div className=''>
+													<span className='font-mono text-white rounded tracking-[.30rem]'>{getWallet?.account_number}</span>
+												</div>
+												<div className='flex justify-end mr-5'>
+													<label className='font-medium text-white' htmlFor=''>
+														Balance ( ₱ {getWallet.balance} )
+													</label>
+												</div>
 											</div>
 										</div>
-									</div>
-									<div>
-										<label className='font-medium text-navy' htmlFor=''>
-											Balance ( ₱0.00 )
-										</label>
+										<div>
+
+												<label className='font-medium text-indigo-800 text-xl cursor-pointer' htmlFor=''>
+													Deposit now
+												</label>
+
+										</div>
 									</div>
 								</div>
-							</div>
+							</RenderIf>
+							<RenderIf value={isEmpty(getWallet)}>
+								<div className='flex flex-col p-5 leading-9'>
+									<h4 className='py-5 text-navy font-medium'>Dashboard</h4>
+									<hr className='border-dotted border-1 border-teal-600' />
+
+									<div style={{ border: '1px solid #eaeaea' }} className='p-5 my-5'>
+										<h5>
+											Hello, <span className='font-medium'>{user.displayName}</span>
+										</h5>
+										<p className='m-0 leading-6'>Introducing our RFID e-wallet solution, your hassle-free way to make transactions on the go. Simply tap your RFID-enabled device to pay securely and swiftly. Track your spending, reload funds, and enjoy the convenience of contactless payments with ease.</p>
+									</div>
+								</div>
+							</RenderIf>
 						</RenderIf>
 
 						<RenderIf value={selectIndex == 1}>
@@ -378,7 +503,7 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 													<Label className='text-navy' htmlFor='age' value='Age' />
 												</div>
 												<Field readonly name='age'>
-													{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} name='age' color='info' id='age' type='number' />}
+													{(fieldProps: FieldProps) => <TextInput {...fieldProps.field} name='age' color='info' id='age' type='number' readOnly />}
 												</Field>
 
 												<ErrorMessage
@@ -502,10 +627,30 @@ const onDateSetRetrival = (e: React.FormEvent<HTMLLabelElement> | React.ChangeEv
 						</RenderIf>
 
 						<RenderIf value={selectIndex == 3}>
-							<div>Schedule</div>
+							<RenderIf value={!isEmpty(paginatedData)}>
+								<div className='flex flex-col p-5 leading-9'>
+									<h4 className='py-5 text-navy font-medium'>Schedule</h4>
+									<hr className='border-dotted border-1 border-teal-600' />
+
+									<div style={{ border: '1px solid #eaeaea' }} className='p-5 my-5'>
+										<TableRender header={headerSchedule} body={bodySchedule} />
+										<PaginationRender prev={() => handlePagination('prev')} next={() => handlePagination('next')} currentPage={currentPage} totalPage={totalPages} />
+									</div>
+								</div>
+							</RenderIf>
+							<RenderIf value={isEmpty(paginatedData)}>
+								<div className='flex flex-col p-5 leading-9'>
+									<h4 className='py-5 text-navy font-medium'>Schedule</h4>
+									<hr className='border-dotted border-1 border-teal-600' />
+
+									<div style={{ border: '1px solid #eaeaea' }} className='p-5 my-5'>
+										<TableRender header={headerSchedule} body={bodySchedule} />
+									</div>
+								</div>
+							</RenderIf>
 						</RenderIf>
 						<RenderIf value={selectIndex == 4}>
-							<div>Schedule</div>
+							<div>Schedulessssws</div>
 						</RenderIf>
 					</main>
 				</div>

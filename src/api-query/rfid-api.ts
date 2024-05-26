@@ -2,6 +2,21 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import Immutable from "../immutable/constant";
 import { RFIDSlotDto } from './types';
 
+
+
+type RFIDSlotDtoReturn = {
+	data: RFIDSlotDto[];
+};
+
+type RFIDParams = {
+	pollingInterval?: boolean;
+	refetchOnMountOrArgChange?: boolean;
+	skip?: boolean;
+};
+
+
+
+
 export const rfidApiService = createApi({
 	reducerPath: 'rfid-slot',
 	tagTypes: ['SLOT'],
@@ -11,6 +26,11 @@ export const rfidApiService = createApi({
 	endpoints: (builder) => ({
 		getRfidSlotAvailable: builder.query<any, any>({
 			query: () => '/rfid-slot',
+			providesTags: ['SLOT'],
+			keepUnusedDataFor: 0,
+		}),
+		getTotalRFIDSlot: builder.query<RFIDSlotDto, RFIDParams | undefined>({
+			query: () => '/rfid-slot/count',
 			providesTags: ['SLOT'],
 			keepUnusedDataFor: 0,
 		}),
@@ -33,12 +53,12 @@ export const rfidApiService = createApi({
 		filterRfidQuery: builder.mutation<string, string>({
 			query: (query) => ({
 				url: `/rfid/search?terms=${query}`,
-				method:'GET'
+				method: 'GET',
 			}),
-			invalidatesTags:['SLOT']
+			invalidatesTags: ['SLOT'],
 		}),
 	}),
 });
 
 
-export const {useNewRFIDSlotMutation,useGetRfidSlotAvailableQuery,useDeleteRfIdSlotMutation,useFilterRfidQueryMutation} = rfidApiService;
+export const {useNewRFIDSlotMutation,useGetRfidSlotAvailableQuery,useDeleteRfIdSlotMutation,useFilterRfidQueryMutation,useGetTotalRFIDSlotQuery} = rfidApiService;

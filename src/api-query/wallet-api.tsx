@@ -1,10 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import Immutable from "../immutable/constant";
-import { Ewallet } from "./types";
+import { Ewallet, EwalletPersonalInformation } from "./types";
 
 export type WalletReturn = {
 	data: Ewallet[];
 };
+
+
+
 
 export type WalleteReturnMutation = {
 	data: {
@@ -37,6 +40,13 @@ export const walletApiService = createApi({
 			providesTags: ['Wallet'],
 			keepUnusedDataFor: 0,
 		}),
+
+		getFilterEwalletByd: builder.query<EwalletPersonalInformation, WalletPollingParams | string>({
+			query: (id) => `wallet/${id}`,
+			providesTags: ['Wallet'],
+			keepUnusedDataFor: 0,
+		}),
+
 		deleteWalletAccount: builder.mutation<WalletReturn, string>({
 			query: (id) => ({
 				url: `/wallet/${id}`,
@@ -54,9 +64,19 @@ export const walletApiService = createApi({
 			}),
 			invalidatesTags: ['Wallet'],
 		}),
+
+		getFilterEwalletByWalletIdentity: builder.mutation<Ewallet, string>({
+			query: (terms) => ({
+				url: `/wallet/${terms}`,
+				method: 'GET',
+				providesTags: ['Wallet'],
+				keepUnusedDataFor: 0,
+			}),
+			invalidatesTags: ['Wallet'],
+		}),
 		getVerifyBalanceAccount: builder.mutation<WalleteReturnMutation, WalletParams>({
 			query: ({ terms, code, personal_id }) => ({
-				url: `/wallet/${code}?terms=${terms}&personal_id=${personal_id}`,
+				url: `/wallet/verify/${code}?terms=${terms}&personal_id=${personal_id}`,
 				method: 'GET',
 				providesTags: ['Wallet'],
 				keepUnusedDataFor: 0,
@@ -66,4 +86,4 @@ export const walletApiService = createApi({
 	}),
 });
 
-export const {useGetEwalletAccountQuery,useDeleteWalletAccountMutation,useGetFilterEwalletMutation,useGetVerifyBalanceAccountMutation} = walletApiService;
+export const {useGetFilterEwalletBydQuery,useGetEwalletAccountQuery,useDeleteWalletAccountMutation,useGetFilterEwalletMutation,useGetVerifyBalanceAccountMutation,useGetFilterEwalletByWalletIdentityMutation} = walletApiService;

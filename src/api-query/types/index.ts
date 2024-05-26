@@ -40,7 +40,7 @@ interface PersonalInformation {
 	address: string;
 	mobileNumber: string;
 	account_id: string;
-	postal_code: number;
+	postal_code: number | string;
 }
 
 interface UploadFile {
@@ -48,12 +48,13 @@ interface UploadFile {
 	profile_photo: File;
 }
 
-interface Account {
+export interface Account {
 	account_id?: string;
 	user_id: string;
 	displayName: string;
 	email: string;
 	photo: string;
+	role?:number;
 }
 
 interface AccountDetails{
@@ -106,6 +107,7 @@ export interface Passenger extends Partial<VehiclePassenger> {
 	personal_id?: PersonalInformation['personal_id'];
 	vehicletype_id?: string;
 	vehicleChosen?: VehiclePassenger;
+	booking_amount?:string;
 };
 
 
@@ -220,7 +222,17 @@ export interface Ewallet {
 	wallet_id: string;
 	account_number: string;
 	balance: string;
+	code:string;
 	personal_id: string;
+};
+
+
+export interface EwalletPersonalInformation {
+	wallet_id: string;
+	account_number: string;
+	balance: string;
+	code: string;
+	personal_information: PersonalInformation & { createdAt: string };
 };
 
 
@@ -229,6 +241,7 @@ export interface Schedules {
 	origin: string;
 	destination: string;
 	arrival_date: string;
+	arrival_time:string;
 	vehicle_id: string;
 	vehicle: Partial<Vehicles>;
 }

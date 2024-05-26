@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import withAdminWrapper from '../component/admin-wrapper'
 import { DashboardHeader } from '../../../common/components/ui/main.ui.component';
 import { isEmpty, isNull } from 'lodash';
@@ -50,6 +50,10 @@ const AddNewRFIDScanner:React.FC = ()=>{
 
 	let valueArr: string[] = [];
 
+
+	const [getFinalValue, setFinalValue] = useState('');
+	const [getVal,setVal] = useState(false);
+
 const handleScannerDevice = useCallback(
 	async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
@@ -59,13 +63,14 @@ const handleScannerDevice = useCallback(
 		setScanning(false);
 
 		if (!isEmpty(value)) {
-			const getFinalValue = valueArr.join('');
+			const valueRec = valueArr.join('');
 
-			const data = { rfid_number: getFinalValue };
 
-			const res: any = await newRFIDSlot(data);
+			if (!isEmpty(valueRec)) {
+					setFinalValue(valueRec);
+					setVal(true);
+			}
 
-			console.log(res, 'get response');
 			setRfidModal(false);
 			setScan('');
 
@@ -76,6 +81,19 @@ const handleScannerDevice = useCallback(
 	[setScan],
 );
 
+useEffect(()=>{
+
+	async function getFetch(){
+			if (!isEmpty(getFinalValue) && getVal) {
+				 await newRFIDSlot({ rfid_number: getFinalValue });
+				setVal(false);
+			}
+
+	}
+
+	getFetch();
+
+},[getFinalValue])
 
 
 	// const showNotification = useCallback(
@@ -153,7 +171,7 @@ const { paginatedData, handlePagination, currentPage, totalPages, setData } = us
 		});
 		document.body.style.overflow = 'hidden';
 		setRfidModal(true);
-	}, [setRfidModal]);
+	}, []);
 
 
 	const [filter,setFilter] = useState<string>('');
@@ -190,7 +208,7 @@ const onFilterQuery = useDebounceRef((e: React.ChangeEvent<HTMLInputElement>) =>
 					<TableRender header={header} body={body} />
 					<PaginationRender prev={() => handlePagination('prev')} next={() => handlePagination('next')} currentPage={currentPage} totalPage={totalPages} />
 
-					<div className='flex justify-end pr-5 mt-10'>
+					<div className='flex justify-start lg:justify-end pr-5 -mt-5 lg:mt-10'>
 						<CustomButton onClick={onRFIdHandler} label={<p className='text-3xl'>+</p>} className='rounded-full w-[4rem] h-[4rem] bg-accent text-white !outline-none !border-none hover:bg-white hover:text-navy' />
 					</div>
 				</div>

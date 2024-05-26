@@ -68,7 +68,7 @@ const navigate = useNavigate();
 	const getProfileUser = !isEmpty(userProfile) ? userProfile : null;
 
 	return (
-		<div onMouseLeave={onBoxDisplay}>
+		<div  onMouseLeave={onBoxDisplay}>
 			<RenderIf value={!isEmpty(users.displayName)}>
 				<div className='relative'>
 					<RenderIf value={!isEmpty(getProfileUser?.photo as unknown as string) && !isUndefined(getProfileUser)}>
@@ -116,7 +116,7 @@ const navigate = useNavigate();
 				</span>
 			</RenderIf>
 			<RenderIf value={modal}>
-				<div onClick={onOpen} className='absolute top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] z-10 w-screen h-screen max-w-[90rem]' ref={modalRef}>
+				<div onClick={onOpen} className='absolute top-0 left-0 right-0 bottom-0 bg-[rgba(0,0,0,0.6)] z-10 w-screen h-screen' ref={modalRef}>
 					<div className='flex flex-col justify-center items-center h-full'>
 						{/*  iwant this not hied when someone clicn in this part of box */}
 						<div

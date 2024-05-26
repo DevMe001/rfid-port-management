@@ -13,6 +13,19 @@ type BookingParams = {
 };
 
 
+interface ScheduleInfo {
+	origin: string;
+	destination: string;
+	arrival_date: string;
+	createdAt: string;
+}
+
+export interface BookingInfo {
+	book_id: string;
+	schedule: ScheduleInfo;
+}
+
+
 export const bookingApiService = createApi({
 	reducerPath: 'booking',
 	tagTypes: ['Booking'],
@@ -27,10 +40,27 @@ export const bookingApiService = createApi({
 		}),
 		getSeatTaken: builder.query<BookingReturn, BookingParams | undefined>({
 			query: () => 'booking/seats',
-			providesTags:['Booking'],
-			keepUnusedDataFor:0
+			providesTags: ['Booking'],
+			keepUnusedDataFor: 0,
+		}),
+		getBookingScheduledByUser: builder.mutation<Partial<BookingInfo[]>, string>({
+			query: (personal_id) => ({
+				url: `/booking/user/${personal_id}`,
+				method: 'GET',
+				providesTags: ['Booking'],
+				keepUnusedDataFor: 0,
+			}),
+			invalidatesTags: ['Booking'],
+		}),
+
+		deleteBookingById: builder.mutation<Partial<BookingInfo[]>, string>({
+			query: (bookId) => ({
+				url: `/booking/${bookId}`,
+				method: 'DELETE'
+			}),
+			invalidatesTags: ['Booking'],
 		}),
 	}),
 });
 
-export const { useGetBookignScheduleQuery,useGetSeatTakenQuery } = bookingApiService;
+export const { useGetBookignScheduleQuery,useGetSeatTakenQuery,useGetBookingScheduledByUserMutation,useDeleteBookingByIdMutation } = bookingApiService;
